@@ -1,0 +1,286 @@
+﻿@page "/AdministratorPage/{admin:int}/Employee"
+@page "/AdministratorPage/{admin:int}/Visitor"
+@page "/AdministratorPage/{admin:int}/Page"
+@page "/AdministratorPage/{admin:int}/Dashboard"
+@page "/AdministratorPage/{admin:int}/Class"
+@page "/AdministratorPage/{admin:int}/Event"
+@page "/AdministratorPage/{admin:int}/Event/{eventno:int}"
+@page "/AdministratorPage/{admin:int}/Moment"
+
+
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Policy = "superusers")]
+
+@if (admin == 0)
+{
+    <p>Loading Page ...</p>
+
+}
+else if (admin == employees.Employee__ID)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Montserrat Font -->
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+        <!-- Material Icons -->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="css/style-admin.css">
+
+        <!-- W3School CSS -->
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+    </head>
+    <body>
+        <div class="grid-container">
+            <!-- Header -->
+            <header class="header">
+                <div class="menu-icon" onclick="openSidebar()">
+                    <span class="material-icons-outlined">menu</span>
+                </div>
+                <div class="header-right">
+                    <span class="material-icons-outlined" style="cursor: pointer;" onclick="toggleMenu()">account_circle</span>
+                </div>
+                <div class="sub-menu-wrap" id="subMenu">
+                    <div class="sub-menu">
+                        <div class="user-info">
+                            <img src="Asset/NamCheongLogo.png">
+                            <p style="text-align: center;">Hi, @Username!</p>
+                        </div>
+                        <hr>
+                        <span class="sub-menu-link" onclick="BeginLogOut()">
+                            <span class="material-icons-outlined">logout</span>
+                            <p>Logout</p>
+                        </span>
+                        <span class="sub-menu-link" onclick="NavigateToEmployee()">
+                            <p>Login as Employee</p>
+                        </span>
+                    </div>
+                </div>
+            </header>
+            <!-- End Header -->
+            <!-- Sidebar -->
+            <aside id="sidebar">
+                <div class="sidebar-title">
+                    <img src="Asset/NamCheongLogo.png" weight="80" height="30">
+                </div>
+
+                <ul class="sidebar-list">
+
+                    <li class="sidebar-list-item" id="Dashboard" >
+                        <a href="/AdministratorPage/@admin/Dashboard" style="color:#fff">
+                            <span class="material-icons-outlined">dashboard</span> Dashboard
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item" id="Employee">
+                        <a href="/AdministratorPage/@admin/Employee" style="color:#fff">
+                            <span class="material-icons-outlined">badge</span> Employee
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item" id="Visitor">
+                        <a href="/AdministratorPage/@admin/Visitor" style="color:#fff">
+                            <span class="material-icons-outlined">groups</span> Visitor
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item" id="Page">
+                        <a href="/AdministratorPage/@admin/Page" style="color:#fff">
+                            <span class="material-icons-outlined">live_tv</span> Page
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item" id="Class" >
+                        <a href="/AdministratorPage/@admin/Class" style="background:none; color:#fff">
+                            <span class="material-icons-outlined">photo_library</span> Class
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item" id="Event">
+                        <a href="/AdministratorPage/@admin/Event" style="color:#fff">
+                            <span class="material-icons-outlined">book</span> Event
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item" id="Moment">
+                        <a href="/AdministratorPage/@admin/Moment" style="color:#fff">
+                            <span class="material-icons-outlined">book</span> Moment
+                        </a>
+                    </li>
+
+                </ul>
+            </aside>
+            <!-- End Sidebar -->
+
+            <div class="main-container">
+
+                <div id="Fade" class="w3-container content w3-animate-opacity" style="display:none">
+                    <NCL.Client.Pages.Admin.AdministratorDashboard />
+                </div>
+
+                <div id="Fade2" class="w3-container content w3-animate-opacity" style="display:none">
+                    <NCL.Client.Pages.Admin.EmployeeReport />
+                </div>
+
+                <div id="Fade3" class="w3-container content w3-animate-opacity" style="display:none">
+                    <NCL.Client.Pages.Admin.VisitorReport />
+                </div>
+
+                <div id="Fade4" class="w3-container content w3-animate-opacity" style="display:none">
+                    <NCL.Client.Pages.Admin.PageGallery />
+                </div>
+                <div id="Fade5" class="w3-container content w3-animate-opacity" style="display:none">
+                    <NCL.Client.Pages.Admin.ClassGallery />
+                </div>
+                <div id="Fade6" class="w3-container content w3-animate-opacity" style="display:none">
+                    <NCL.Client.Pages.Admin.EventGallery />
+                </div>
+                <div id="Fade7" class="w3-container content w3-animate-opacity" style="display:none">
+                    <NCL.Client.Pages.Admin.MomentGallery />
+                </div>
+
+            </div>
+        </div>
+    </body>
+    </html>
+    <script src="js/Admin.js"></script>
+    <script>
+
+        // TABLINK TOGGLE
+        function openLink(evt, animName, idName) {            
+            var i, x, tablinks;
+            x = document.getElementsByClassName("content");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("sidebar-list-item");
+            for (i = 0; i < x.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" sidebar-list-item-clicked", "");
+            }
+            document.getElementById(animName).style.display = "block";
+            document.getElementById(idName).className += " sidebar-list-item-clicked";          
+        }
+
+        // Perform actions if the current URL contains written keywords
+        // Get the element with specific id and click on it
+
+        if (window.location.href.endsWith('/Employee')) {
+            openLink(event, 'Fade2', 'Employee');
+        }
+        else if (window.location.href.endsWith('/Visitor')) {
+            openLink(event, 'Fade3', 'Visitor');
+        }
+        else if (window.location.href.endsWith('/Page')) {
+            openLink(event, 'Fade4', 'Page');
+        }
+        else if (window.location.href.endsWith('/Class')) {
+            openLink(event, 'Fade5', 'Class');
+        }
+        else if (window.location.href.includes('/Event/')) {
+            openLink(event, 'Fade6', 'Event');
+        }
+        else if (window.location.href.endsWith('/Event')) {
+            openLink(event, 'Fade6', 'Event');
+        }
+        else if (window.location.href.endsWith('/Moment')) {
+            openLink(event, 'Fade7', 'Moment');
+        }
+        else if (window.location.href.endsWith('/Dashboard')) {
+            openLink(event, 'Fade', 'Dashboard');
+        }
+
+        // NAVIGATION TO EMPLOYEE PAGE
+        function NavigateToEmployee() {
+            window.location.href = "/Employee/@emp/Home";
+        }
+    </script>
+
+}
+else
+{
+    <h1>Administrator Access Required</h1>
+    <br />
+    <p>Please gain administrator permission to access this page.</p>
+}
+
+@code {
+    [Parameter] public int emp { get; set; }
+    [Parameter] public int admin { get; set; }
+    [Parameter] public int eventno { get; set; }
+
+private void OpenPage()
+    {        
+        // await JSRuntime.InvokeVoidAsync("openLink", "event", "Fade");
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Document", true);
+    }
+    public string? Username { get; set; }
+    public Employee employees { get; set; } = new Employee();
+
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employees = existingEmployee;
+
+            //Update log
+            existingEmployee.Employee__Log = DateTime.Now;
+            var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Employees/UpdateEmployeeByID/{existingEmployee.Employee__ID}", existingEmployee);
+
+            Console.WriteLine("Existing Employee in Admin Dashboard - " + @UserName);
+            admin = employees.Employee__ID;
+            emp = employees.Employee__ID;
+        }
+        else
+        {
+            // Post the employees details to the Employee controller to create new employee data
+            await AddEmployee();
+            admin = employees.Employee__ID;
+            emp = employees.Employee__ID;
+            Console.WriteLine("New Employee Entry " + @UserName);
+            Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Dashboard", true);
+        }
+    }
+
+    async Task AddEmployee()
+    {
+        //Create a new employee record
+        var newEmployee2 = new Employee()
+            {
+                Employee__Name = UserName,
+                Employee__Log = DateTime.Now
+            };
+
+        try
+        {
+            // Post the employees data to the server using PostAsJsonAsync
+            var result = await Http.PostAsJsonAsync("https://localhost:7219/api/Employees/AddEmployee", newEmployee2);
+
+            // Ensure the request was successful
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Added New Employee");
+            };
+
+        }
+        catch (HttpRequestException ex)
+        {
+            // Handle any exceptions or errors that occur during the request BY logging the exception or show an error message to the user
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+}

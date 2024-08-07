@@ -1,0 +1,166 @@
+﻿@using static System.Net.WebRequestMethods
+@using Microsoft.AspNetCore.Authorization
+
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@attribute [Authorize (Policy = "superusers")]
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+@using BlazorBootstrap
+@using NCL.Shared.Entities
+@using System.Text
+
+            <div class="main-container">
+                <div class="main-title">
+                    <p class="font-weight-bold">Administrator Dashboard</p>
+                </div>
+
+                <div class="main-cards">
+                    <div class="card">
+                        <div class="card-inner">
+                            <p class="text-green">EMPLOYEE</p>
+                            <span class="material-icons-outlined text-green">badge</span>
+                        </div>
+                    <span class="text-green font-weight-bold">@EmpNum</span>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-inner">
+                            <p class="text-green">VISITOR</p>
+                            <span class="material-icons-outlined text-green">people</span>
+                        </div>
+                    <span class="text-green font-weight-bold">@VisitorNum</span>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-inner">
+                            <p class="text-green">VIDEO</p>
+                            <span class="material-icons-outlined text-green">live_tv</span>
+                        </div>
+                    <span class="text-green font-weight-bold">@VideoNum</span>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-inner">
+                            <p class="text-green">LOCATION</p>
+                            <span class="material-icons-outlined text-green">photo_library</span>
+                        </div>
+                        <span class="text-green font-weight-bold">@LocationNum</span>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-inner">
+                            <p class="text-green">PAGE</p>
+                            <span class="material-icons-outlined text-green">photo_library</span>
+                        </div>
+                        <span class="text-green font-weight-bold"></span>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-inner">
+                            <p class="text-green">EVENT</p>
+                            <span class="material-icons-outlined text-green">photo_library</span>
+                        </div>
+                        <span class="text-green font-weight-bold"></span>
+                    </div>
+                </div>
+            </div>
+
+
+@code {
+    [Parameter] public int admin { get; set; }
+
+    List<Visitor> guests = new List<Visitor>();
+    List<Employee> employees = new List<Employee>();
+    List<Video> videos = new List<Video>();
+
+    List<Page> docs = new List<Page>();
+    List<Location> locations = new List<Location>();
+
+    private HashSet<Visitor> selectedGuests = new();
+    public int EmpNum, VisitorNum, VideoNum, LocationNum;
+
+    public string? Username { get; set; }
+    public Employee employees2 { get; set; } = new Employee();
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employees2 = existingEmployee;
+            Console.WriteLine("Admin in Image Gallery");
+            admin = employees2.Employee__ID;
+        }
+        else
+        {
+            // Navigate back to home page if user != admin
+            Console.WriteLine("No Access to Admin Only Page - Image Gallery");
+            Navigation.NavigateTo("/", true);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployees();
+        EmpNum = employees.Count;
+
+        await LoadVisitors();
+        VisitorNum = guests.Count;
+
+        await LoadVideos();
+        VideoNum = videos.Count;
+
+        await LoadLocations();
+        LocationNum = locations.Count;
+
+    }
+
+    async Task LoadVisitors()
+    {
+        var result = await Http.GetFromJsonAsync<List<Visitor>>("https://localhost:7219/api/Visitors");
+        if (result != null)
+        {
+            guests = result;
+        }
+    }
+
+    async Task LoadEmployees()
+    {
+        var result = await Http.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees/GetEmployees");
+        if (result != null)
+        {
+            employees = result;
+        }
+    }
+
+    async Task LoadVideos()
+    {
+        var result = await Http.GetFromJsonAsync<List<Video>>("https://localhost:7219/api/Videos");
+        if (result != null)
+        {
+            videos = result;
+        }
+    }
+
+    async Task LoadLocations()
+    {
+        var result = await Http.GetFromJsonAsync<List<Location>>("https://localhost:7219/api/Locations");
+        if (result != null)
+        {
+            locations = result;
+        }
+    }
+
+}

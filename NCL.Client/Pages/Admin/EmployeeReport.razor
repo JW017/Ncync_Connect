@@ -1,0 +1,205 @@
+﻿@using static System.Net.WebRequestMethods
+@using Microsoft.AspNetCore.Authorization
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+@using BlazorBootstrap
+@using NCL.Shared.Entities
+@using System.Text
+
+
+@if (employees == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="button-container">
+        <div class="button-box">
+            <h2>Employee Report </h2>
+            <Tooltip Class="d-inline-block" Title="Export to Excel">
+                <button class="btn btn-primary" @onclick="ExportToExcel">Export</button>
+            </Tooltip>
+            <Tooltip Class="d-inline-block" Title="Delete Multiple Employees">
+                <button class="btn btn-primary" @onclick="@(()=>ShowMultipleDeleteEmployeeDialogAsync(@selectedEmployees))" id="deleteE">Delete</button>
+            </Tooltip>
+        </div>
+    </div>
+
+    <br />
+
+    <ConfirmDialog @ref="dialog" />
+    <Grid TItem="Employee"
+          Class="table table-hover table-bordered table-striped"
+          DataProvider="EmployeesDataProvider"
+          AllowFiltering="true"
+          AllowPaging="true"
+          PageSize="5"
+          PageSizeSelectorVisible="true"
+          PageSizeSelectorItems="@(new int[] { 5,10,20 })"
+          AllowSorting="true"
+          AllowSelection="true"
+          SelectionMode="GridSelectionMode.Multiple"
+          SelectedItemsChanged="OnSelectedItemsChanged"
+          Responsive="true"
+          HeaderRowCssClass="bg-secondary text-white bg-opacity-55 border-bottom-0">
+
+
+        <GridColumn TItem="Employee" HeaderText="Employee Name" PropertyName="Employee__Name" SortKeySelector="item => item.Employee__Name">
+            @context.Employee__Name
+        </GridColumn>
+        <GridColumn TItem="Employee" HeaderText="Employee Log" PropertyName="Employee__Log" SortKeySelector="item => item.Employee__Log">
+            @context.Employee__Log
+        </GridColumn>
+    </Grid>
+    <div class="mt-3">
+        Selected Items Count: @selectedEmployees.Count
+    </div>
+
+    @if (selectedEmployees.Count > 0)
+    {
+        <div class="mt-2">
+            Selected Employees:
+            <ul>
+                @foreach (var g in selectedEmployees)
+                {
+                    <li>@g.Employee__Name</li>
+                }
+            </ul>
+        </div>
+    }
+}
+
+<script>
+    function EnableEmployeeDeleteBtn() {
+        btn = document.getElementById("deleteE").disabled = false;
+    }
+
+    function DisableEmployeeDeleteBtn() {
+        btn = document.getElementById("deleteE").disabled = true;
+    }
+</script>
+
+
+@code {
+    [Parameter] public int admin { get; set; }
+    List<Employee> employees = new List<Employee>();
+    private HashSet<Employee> selectedEmployees = new();
+
+    public string? Username { get; set; }
+    public Employee employees2 { get; set; } = new Employee();
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    private ConfirmDialog dialog = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employees2 = existingEmployee;
+            Console.WriteLine("Admin in Employee Report");
+            admin = employees2.Employee__ID;
+        }
+        else
+        {
+            // Navigate back to home page if user != admin
+            Console.WriteLine("No Access to Admin Only Page - Employee Report");
+            Navigation.NavigateTo("/", true);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployeeReport();
+        await JSRuntime.InvokeVoidAsync("DisableEmployeeDeleteBtn");
+    }
+
+    async Task DeleteSelectedEmployee(HashSet<Employee> employee)
+    {
+        foreach (var e in employee)
+        {
+            await Http.DeleteAsync("https://localhost:7219/api/Employees/DeleteEmployeesByUsername/" + e.Employee__ID);
+        }
+        await LoadEmployeeReport();
+        Navigation.NavigateTo($"https://localhost:7219/AdministratorPage/{admin}/Employee", true);
+    }
+
+    async Task LoadEmployeeReport()
+    {
+        var result = await Http.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees/GetEmployees");
+        if (result != null)
+        {
+            employees = result;
+        }
+    } 
+
+    private async Task<BlazorBootstrap.GridDataProviderResult<Employee>> EmployeesDataProvider(BlazorBootstrap.GridDataProviderRequest<Employee> request)
+    {
+        await LoadEmployeeReport();
+        return await Task.FromResult(request.ApplyTo(employees));
+    }
+
+    private Task OnSelectedItemsChanged(HashSet<Employee> employee)
+    {
+        selectedEmployees = employee is not null && employee.Any() ? employee : new();
+        if (selectedEmployees.Count > 0)
+        {
+            JSRuntime.InvokeVoidAsync("EnableEmployeeDeleteBtn");
+        }
+        else
+        {
+            JSRuntime.InvokeVoidAsync("DisableEmployeeDeleteBtn");
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private void ExportToExcel()
+    {        
+        var csvContent = new StringWriter();
+        csvContent.WriteLine("NCL Employee Report");
+
+        csvContent.WriteLine("No.,Employee Name,Video Progress");
+        int index = 1;
+        foreach (var employee in employees)
+        {       
+            csvContent.WriteLine($"{index++},{employee.Employee__Name},{employee.Employee__Log}");
+        }
+
+        var fileName = "EmployeeReport.csv";
+        var csvString = csvContent.ToString();
+
+        // Convert the CSV string to a byte array
+        var byteArray = Encoding.UTF8.GetBytes(csvString);
+
+        // Invoke JavaScript interop to initiate the file download
+        JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(byteArray));
+    }
+
+    private async Task ShowMultipleDeleteEmployeeDialogAsync(HashSet<Employee> employee)
+    {
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Multiple Employees",
+            message1: $"Are you sure you want to delete these {selectedEmployees.Count} selected employees?",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteSelectedEmployee(selectedEmployees);
+        }
+    }
+}

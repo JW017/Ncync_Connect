@@ -1,0 +1,674 @@
+﻿@page "/T"
+
+@using static System.Net.WebRequestMethods
+@using Microsoft.AspNetCore.Authorization
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+@using BlazorBootstrap
+@using NCL.Shared.Entities
+@using System.Text
+@using System.IO
+
+<style>
+
+    /* Style the tab */
+    .tab2, .tab5 {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+        /* Style the buttons inside the tab */
+        .tab2 ,.tab5 button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+            /* Change background color of buttons on hover */
+            .tab2, .tab5 button:hover {
+                background-color: #ddd;
+            }
+
+            /* Create an active/current tablink class */
+            .tab2, .tab5 button.active {
+                background-color: #ccc;
+            }
+
+    /* Style the tab content */
+    .tabcontent2, .tabcontent5 {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+</style>
+
+@if (videos == null)
+{
+<p><em>Loading...</em></p>
+}
+else
+{
+<div class="button-container">
+    <div class="button-box">
+        <h2> Image Gallery </h2>
+        <Tooltip Class="d-inline-block" Title="Add New Video">
+            <button class="btn btn-primary" id="addImgBtn" @onclick="OpenAddVideoModal">Add</button>
+        </Tooltip>
+        <Tooltip Class="d-inline-block" Title="Delete Multiple Videos">
+            <button class="btn btn-primary" @onclick="@(()=>ShowMultipleDeleteVideoDialogAsync(@selectedVideos))" id="deleteV">Delete</button>
+        </Tooltip>
+    </div>
+</div>
+
+<br />
+
+<Grid TItem="Video"
+Class="table table-hover table-bordered table-striped"
+DataProvider="VideosDataProvider"
+AllowFiltering="true"
+AllowPaging="true"
+PageSize="5"
+PageSizeSelectorVisible="true"
+PageSizeSelectorItems="@(new int[] { 5,10,20 })"
+AllowSorting="true"
+AllowSelection="true"
+SelectionMode="GridSelectionMode.Multiple"
+SelectedItemsChanged="OnSelectedVideosChanged"
+HeaderRowCssClass="bg-secondary text-white bg-opacity-55 border-bottom-0"
+Responsive="true">
+
+<GridColumn TItem="Video" HeaderText="Name" PropertyName="Video__Name" SortKeySelector="item => item.Video__Name">
+@context.Video__Name
+</GridColumn>
+
+<GridColumn TItem="Video" HeaderText="Video Location" PropertyName="LocationLocation__ID" SortKeySelector="item => item.LocationLocation__ID">
+            @foreach (var loc in locations)
+            {
+                if (video.LocationLocation__ID == loc.Location__ID)
+                {
+                    @loc.Location__Name
+                }
+            }
+</GridColumn>
+
+<GridColumn TItem="Video" HeaderText="Image" Sortable="false" Filterable="false">
+<Tooltip Class="d-inline-block" Title="View Video">
+    <button class="btn btn-primary" id="ImgViewBtn" @onclick="()=>ViewVideo(context.Video__ID)"><Icon Name="IconName.CardList" /></button>
+</Tooltip>
+<Tooltip Class="d-inline-block" Title="Edit Video" >
+    <button class="btn btn-primary" id="ImgEditBtn" @onclick="()=>EditVideo(context.Video__ID)"><Icon Name="IconName.PencilSquare" /></button>
+</Tooltip>
+<Tooltip Class="d-inline-block" Title="Delete Video">
+    <button class="btn btn-primary" @onclick="()=>ShowDeleteVideoDialogAsync(context.Video__ID)"><Icon Name="IconName.Trash" /></button>
+</Tooltip>
+</GridColumn>
+
+</Grid>
+
+
+<div class="mt-3">
+Selected Items Count: @selectedVideos.Count
+</div>
+    @if (selectedVideos.Count > 0)
+    {
+<div class="mt-2">
+Selected Videos:
+<ul>
+
+@foreach (var i in selectedVideos)
+{
+<li>@i.Video__Name</li>
+}
+</ul>
+</div>
+}
+
+}
+
+<!-- The Add Video Modal -->
+<div id="VideoModal" class="modal">
+
+    <!-- Add Video content -->
+    <div class="modal-content">
+        <span class="close" @onclick="ResetCloseVideoModal">&times;</span>
+
+        <div class="tab5">
+            <button id="AddVideoTab" class="tablinks5" onclick="openTab5(event, 'AddVideoContent')">Video Upload</button>
+        </div>
+
+        <div id="AddVideoContent" class="tabcontent5" style="display:block;">
+
+            <EditForm Model="video">
+                <DataAnnotationsValidator />
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                <div>
+                    <label for="vidName">Video Name:</label>
+                    <InputText id="vidName" @bind-Value="video.Video__Name" class="form-control" />
+                    <ValidationMessage For="@(() => video.Video__Name)" />
+                </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="videoloc">Video Location:</label>
+                        <InputSelect id="videoloc" @bind-Value="video.LocationLocation__ID" class="form-control">
+                            <option value="0">Please select a location</option>
+                            @foreach (var loc in locations)
+                            {
+                                <option value="@loc.Location__ID">@loc.Location__Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="Videofolder">Video Folder:</label>
+                        <InputText id="Videofolder" @bind-Value="CreatePath" class="form-control" />
+                        <button @onclick="CreateFolder">Create Directory</button>
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0px 50px 0px; display: flex">
+                    <div>Select your file:</div>
+                    <InputFile id="VideoPath" @key=@(inputFileId) OnChange="VideoUpload" accept=".jpg,.png,.jpeg">
+                    </InputFile>
+                </div>
+
+                @if (VideoFileName != string.Empty)
+                {
+                    <div style="margin: 20px 0px 50px 0px; display: flex">
+                        <img src="/Video/@VideoFileName" alt="@VideoFileName" width="420" height="276">
+                    </div>
+                }
+
+                <button type="button" class="btn btn-secondary" @onclick="ResetInputVideo">Reset</button>
+                <button type="submit" class="btn btn-primary" @onclick="VideoSubmit">Upload Selected File</button>
+
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(ErrorMsg))
+            {
+                <div>Error: @ErrorMsg</div>
+            }
+
+        </div>
+
+    </div>
+</div>
+
+<!-- The Edit Video Modal -->
+<div id="VideoEditModal" class="modal">
+
+    <!-- Edit Video content -->
+    <div class="modal-content">
+        <span class="close" @onclick="ResetCloseVideoModal">&times;</span>
+
+        <div class="tab5">
+            <button class="tablinks5 active">Edit Video</button>
+        </div>
+
+        <div id="veContent" class="tabcontent5" style="display:block;">
+
+            <EditForm Model="video">
+                <DataAnnotationsValidator />
+                <div>
+                    <label for="Video Name">Video Name:</label>
+                    <InputText id="Video Name" @bind-Value="video.Video__Name" class="form-control" />
+                    <ValidationMessage For="@(() => video.Video__Name)" />
+                </div>
+
+                <div>
+                    <div style="margin-bottom: 20px; display: flex">
+                        <label for="VideoLocation">Video Location:</label>
+                        <InputSelect id="VideoLocation" @bind-Value="video.LocationLocation__ID" class="form-control">
+                            <option value="0">Please select an image tag</option>
+                            @foreach (var loc in locations)
+                            {
+                                <option value="@loc.Location__ID">@loc.Location__Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                @if (video != null){
+                    <div style="margin-bottom: 50px; display: flex">
+                        <img src="/Video/@video.Video__Path" style="width:500px; height:300px" alt="@video.Video__Name">
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary" @onclick="@(()=>SubmitVideoEdit(video.Video__ID))">Save</button>
+
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(ErrorMsg))
+            {
+                <div>Error: @ErrorMsg</div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<!-- The View Video Modal -->
+<div id="VideoViewModal" class="modal">
+
+    <!-- View Video content -->
+    <div class="modal-content">
+        <span class="close" @onclick="ResetCloseVideoModal">&times;</span>
+        <div class="tab5">
+            <button class="tablinks5 active">Video Details</button>
+        </div>
+
+        <div class="tabcontent5" id="vvContent" style="text-align:center">
+            @if (video.Video__Path == previousPath)
+            {
+                <div class="Video-tabcontent">
+                    <img src="/Video/@video.Video__Path" alt="@video.Video__Name">
+                </div>
+            }
+
+            <div style="margin: 0px 0px 5px 0px">
+                <label for="ImgTitle">Video Name:&emsp;</label>
+                @video.Video__Name
+            </div>
+
+            <div style="margin: 0px 0px 20px 0px">
+                <div>
+                    <label for="videoType">Video Location:&emsp;</label>
+                    @foreach (var loc in locations)
+                    {
+                        if (video.LocationLocation__ID == loc.Location__ID)
+                        {
+                            @loc.Location__Name
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Img JavaScript -->
+<script>
+
+    // Get the modal
+    var vmodal = document.getElementById("VideoModal");
+    var vemodal = document.getElementById("VideoEditModal");
+    var vvmodal = document.getElementById("VideoViewModal");
+
+    // When the user clicks on <span> (x), close the modal
+    function CloseImageModal() {
+        vmodal.style.display = "none";
+        vemodal.style.display = "none";
+        vvmodal.style.display = "none";
+        document.getElementById("AddImageContent").style.display = "none";
+        document.getElementById("AddImageTagContent").style.display = "none";
+    }
+
+    // When the user clicks the button, open the modal
+    function OpenVideoAdd() {
+        vmodal.style.display = "block";
+        document.getElementById("AddVideoContent").style.display = "block";
+        document.getElementById("AddVideoTab").className += " active";
+    }
+
+    function OpenVideoEdit() {
+        vemodal.style.display = "block";
+        document.getElementById("veContent").style.display = "block";
+    }
+
+    function OpenVideoView() {
+        vvmodal.style.display = "block";
+        document.getElementById("vvContent").style.display = "block";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+
+    function openTab5(evt5, tName5) {
+        var k, tabcontent5, tablinks5;
+        tabcontent5 = document.getElementsByClassName("tabcontent5");
+        for (k = 0; k < tabcontent2.length; k++) {
+            tabcontent2[k].style.display = "none";
+        }
+        tablinks5 = document.getElementsByClassName("tablinks5");
+        for (k = 0; k < tablinks5.length; k++) {
+            tablinks5[k].className = tablinks5[k].className.replace(" active", "");
+        }
+        document.getElementById(tName5).style.display = "block";
+        evt5.currentTarget.className += " active";
+    }
+
+    function EnableVideoDeleteBtn() {
+        btn = document.getElementById("deleteV").disabled = false;
+    }
+
+    function DisableVideoDeleteBtn() {
+        btn = document.getElementById("deleteV").disabled = true;
+    }
+    </script>
+
+
+
+@code {
+
+    [Parameter] public int admin { get; set; }
+    [Parameter] public int? ID { get; set; }
+
+    public string? Username { get; set; }
+    public Employee employees { get; set; } = new Employee();
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employees = existingEmployee;
+            Console.WriteLine("Admin in Visitor Report");
+            admin = employees.Employee__ID;
+        }
+        else
+        {
+            // Navigate back to home page if user != admin
+            Console.WriteLine("No Access to Admin Only Page - Visitor Report");
+            Navigation.NavigateTo("/", true);
+        }
+    }
+
+    List<Location> locations = new List<Location>();
+    public Location locs { get; set; } = new Location();
+
+    private ConfirmDialog dialog = default!;
+
+    List<Video> videos = new List<Video>();
+    public Video video { get; set; } = new Video();
+    private HashSet<Video> selectedVideos = new();
+
+    private string ErrorMsg { get; set; } = String.Empty;
+    const long maxFileSize = 5000 * 1024 * 100; // 500MB
+    private string VideoFileName { get; set; } = String.Empty;
+    private string VideoFilePath { get; set; } = String.Empty;
+
+    private Guid inputFileId = Guid.NewGuid();
+    IBrowserFile browserVideos;
+
+    //used to store the Edit item original image path.
+    private string previousPath = string.Empty;
+
+    private string CreatePath = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVideo();
+        await JSRuntime.InvokeVoidAsync("DisableVideoDeleteBtn");
+    }
+
+    async Task DeleteVideo(HashSet<Video> video)
+    {
+        foreach (var i in video)
+        {
+            var targetFilePath = "wwwroot/Video/" + i.Video__Path;
+            if (System.IO.File.Exists(targetFilePath))
+            {
+                System.IO.File.Delete(targetFilePath);
+            }
+
+            await Http.DeleteAsync("https://localhost:7219/api/Videos/" + i.Video__ID);
+        }
+
+        await LoadVideo();
+
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Visitor", true);
+    }
+
+    async Task LoadVideo()
+    {
+        var result = await Http.GetFromJsonAsync<List<Video>>("https://localhost:7219/api/Videos");
+        if (result != null)
+        {
+            videos = result;
+        }
+    }
+
+    //Retrieve location data from database
+    async Task LoadLocation()
+    {
+        var result2 = await Http.GetFromJsonAsync<List<Location>>("https://localhost:7219/api/Locations");
+        if (result2 != null)
+        {
+            locations = result2;
+        }
+    }
+
+    private async Task<BlazorBootstrap.GridDataProviderResult<Video>> VideosDataProvider(BlazorBootstrap.GridDataProviderRequest<Video> request)
+    {
+        await LoadVideo();
+        return await Task.FromResult(request.ApplyTo(videos));
+    }
+
+    private Task OnSelectedVideosChanged(HashSet<Video> videoo)
+    {
+        selectedVideos = videos is not null && videoo.Any() ? videoo : new();
+        if (selectedVideos.Count > 0)
+        {
+            JSRuntime.InvokeVoidAsync("EnableVideoDeleteBtn");
+        }
+        else
+        {
+            JSRuntime.InvokeVoidAsync("DisableVideoDeleteBtn");
+        }
+        return Task.CompletedTask;
+    }
+
+    private void ResetInputVideo()
+    {
+        var targetDeleteVideoPath = "wwwroot/Video/" + VideoFileName;
+        if (System.IO.File.Exists(targetDeleteVideoPath))
+        {
+            System.IO.File.Delete(targetDeleteVideoPath);
+        }
+
+        // Change id so that blazor re-renders InputFile as new component
+        inputFileId = Guid.NewGuid();
+        video = new();
+        VideoFileName = string.Empty;
+    }
+
+    private async void ResetCloseVideoModal()
+    {
+        ResetInputVideo();
+        await JSRuntime.InvokeVoidAsync("CloseVideoModal");
+    }
+
+    public async Task VideoUpload(InputFileChangeEventArgs e)
+    {
+        browserVideos = e.File;
+        if (browserVideos != null)
+        {
+            try
+            {
+                string path = "wwwroot\\Video\\" + CreatePath;
+
+                // Combine the base path with the new folder path
+                string fullPath = Path.Combine(Environment.CurrentDirectory, path);
+
+                // Check if the folder doesn't exist and then create it
+                if (!Directory.Exists(fullPath))
+                {
+                    DirectoryInfo di = Directory.CreateDirectory(fullPath);
+                }
+                else
+                {
+                    Console.WriteLine("That path exists already.");
+                }
+
+                var fileStream = browserVideos.OpenReadStream(maxFileSize);
+                var randomFile = Path.Combine("wwwroot", "Video", CreatePath, browserVideos.Name);
+                var extension = Path.GetExtension(browserVideos.Name);
+                var targetFilePath = Path.ChangeExtension(randomFile, extension);
+                VideoFilePath = video.Video__Path + extension;
+
+                var targetStream = new FileStream(targetFilePath, FileMode.Create);
+                await fileStream.CopyToAsync(targetStream);
+                targetStream.Close();
+
+                VideoFileName = browserVideos.Name;
+
+            }
+            catch (Exception exception)
+            {
+                ErrorMsg = exception.Message;
+            }
+        }
+    }
+
+    async Task VideoSubmit()
+    {
+        video.Video__Path = VideoFileName;
+
+        var result = await Http.PostAsJsonAsync("https://localhost:7219/api/Videos/AddVideos", video);
+        video = await result.Content.ReadFromJsonAsync<Video>();
+        await InvokeAsync(StateHasChanged);
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Visitor", true);
+    }
+
+    async Task OpenAddVideoModal()
+    {
+        await JSRuntime.InvokeVoidAsync("OpenVideoAdd");
+    }
+
+    async Task EditVideo(int id)
+    {
+
+        var selectedVideo = videos.First(c => c.Video__ID == id);
+
+        //display the item's detailed information
+        video.Video__ID = selectedVideo.Video__ID;
+        video.Video__Name = selectedVideo.Video__Name;
+        video.Video__Path = selectedVideo.Video__Path;
+        previousPath = selectedVideo.Video__Path;
+        video.LocationLocation__ID = selectedVideo.LocationLocation__ID;
+
+        await LoadVideo();
+
+        await JSRuntime.InvokeVoidAsync("OpenVideoEdit");
+    }
+
+    async Task SubmitVideoEdit(int id)
+    {
+        video.Video__Path = previousPath;
+
+        var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Videos/UpdateVideoByID/{id}", video);
+
+        await LoadVideo();
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Visitor", true);
+    }
+
+    async Task ViewVideo(int id)
+    {
+
+        var selectedVideo = videos.First(c => c.Video__ID == id);
+
+        //display the item's detailed information
+        video.Video__ID = selectedVideo.Video__ID;
+        video.Video__Name = selectedVideo.Video__Name;
+        video.Video__Path = selectedVideo.Video__Path;
+        previousPath = selectedVideo.Video__Path;
+        video.LocationLocation__ID = selectedVideo.LocationLocation__ID;
+
+        await LoadVideo();
+
+        await JSRuntime.InvokeVoidAsync("OpenVideoView");
+    }
+
+    async Task DeleteVideoByID(int id)
+    {
+        var selectedVideo = videos.First(c => c.Video__ID == id);
+
+        var targetDeleteVideoPath = "wwwroot/Video/" + selectedVideo.Video__Path;
+        if (System.IO.File.Exists(targetDeleteVideoPath))
+        {
+            System.IO.File.Delete(targetDeleteVideoPath);
+        }
+        else
+        {
+            Console.WriteLine("Fail to delete Video file");
+        }
+        await Http.DeleteAsync("https://localhost:7219/api/Videos/" + selectedVideo.Video__ID);
+        await LoadVideo();
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Visitor", true);
+    }
+
+    private async Task ShowDeleteVideoDialogAsync(int id)
+    {
+        var selectedVideo = videos.First(c => c.Video__ID == id);
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Video",
+            message1: "Are you sure you want to delete this video?",
+            message2: $"Selected image: {selectedVideo.Video__Name}",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteVideoByID(selectedVideo.Video__ID);
+        }
+    }
+
+    private async Task ShowMultipleDeleteVideoDialogAsync(HashSet<Video> vid)
+    {
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Multiple Images",
+            message1: $"Are you sure you want to delete these {vid.Count} selected videos?",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteVideo(vid);
+        }
+    }
+
+
+    private void CreateFolder()
+    {
+        string path = "wwwroot\\Video\\" + CreatePath;
+
+        // Combine the base path with the new folder path
+        string fullPath = Path.Combine(Environment.CurrentDirectory, path);
+
+        // Check if the folder doesn't exist and then create it
+        if (!Directory.Exists(fullPath))
+        {
+            DirectoryInfo di = Directory.CreateDirectory(fullPath);
+            CreatePath = string.Empty;
+        }
+        else
+        {
+            Console.WriteLine("That path already exists.");
+        }
+    }
+}
+

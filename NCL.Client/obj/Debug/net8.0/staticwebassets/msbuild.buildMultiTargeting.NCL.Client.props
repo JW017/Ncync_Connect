@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\NCL.Client.props" />
+</Project>

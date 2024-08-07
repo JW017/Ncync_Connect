@@ -1,0 +1,104 @@
+﻿@page "/b"
+
+@using System.Security.Claims
+@using static System.Net.WebRequestMethods
+@using NCL.Shared.Entities;
+
+@inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Home Page</title>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style-reveal.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <img src="/Asset/NamCheongLogo.png" alt="Logo" class="logo-a">
+            <ul>
+                <li>
+                    <a href="#">Video</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+
+        <section class="section1">
+            <img src="/Asset/VisitorAsset/HomePage/ssv-line.png"   class="parallax-b ssv-line">
+            <span class="text1 parallax-b"> Nam Cheong</span>
+            <span class="text2 parallax-b">Delivering Possibilities</span>
+        </section>
+
+
+    <section class="section2">
+        <img src="/Asset/VisitorAsset/HomePage/psv-line.png" class="psv-line">
+            <span class="text-video ">Video</span>
+            <span class="text-gallery ">Gallery</span>
+            <hr>
+            <div class="video-container">
+            @foreach (var vid in videos)
+            {
+                if (videos.Count != 0)
+                {
+                    <video controls>
+                        <source src="/Video/@vid.Video__Path" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                }
+            }
+            <h1 class="text-health">Health & Safety Video</h1>
+            </div>
+    </section>
+
+    <section class="footer">
+        <p class="tagline">QUALITY . RELIABILITY . DELIVERY</p>
+        <div class="green-box">
+            <p class="text-copyright">© Copyright 2024. All Rights Reserved by Nam Cheong Dockyard Sdn Bhd Registration Number: 0008278X / 196801000681</p>
+        </div>
+    </section>
+
+@*     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="js/parallax-r.js"></script> *@
+    
+</body>
+</html>
+
+@code {
+
+    [Parameter] public int? VID { get; set; }
+
+    public Video vid { get; set; } = new Video();
+    List<Video> videos = new List<Video>();
+    public Location Locations { get; set; } = new Location();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the video type from the SQL database
+        var result = await Http.GetFromJsonAsync<List<Video>>("https://localhost:7219/api/videos");
+        if (result != null && result.Count > 0)
+        {
+            videos = result;
+        }
+    }
+
+
+    public void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("/MicrosoftIdentity/Account/SignOut", "/");
+    }
+
+    public void NavigateToVisitorGallery()
+    {
+        Navigation.NavigateTo("/VisitorPage/Gallery/" + VID);
+    }
+
+}

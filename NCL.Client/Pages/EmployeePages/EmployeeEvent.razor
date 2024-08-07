@@ -1,0 +1,567 @@
+﻿@page "/Employee/{emp:int}/Page/{PID:int}/Event/{EID:int}"
+
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using static System.Net.WebRequestMethods
+@using NCL.Shared.Entities;
+
+@inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style-home.css" />
+    <link rel="stylesheet" href="css/employeeLayout.css" />
+    <link rel="stylesheet" href="css/imageSlideshow.css" />
+    <title>NCL Employee Class</title>
+
+
+    <style>
+        .event-text-box {
+            position: absolute;
+            margin: auto 10% auto 0;
+            left: 10vw;
+            width: 50vw;
+            display: flex;
+            flex-direction: column;
+            align-items: normal;
+            text-align: left;
+            gap: 0px;
+            background-color: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .text-first{
+            position: relative;
+            font-family: "Sansita", sans-serif;            
+            font-style: normal;
+            font-weight: 700;
+            font-size: 30px;
+            line-height: 0.9;
+            color: #FFFFFF;
+        }
+
+        .text-second {
+            position: relative;
+            font-family: "Forum", serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 100px;
+            line-height: 0.9;
+            color: #FFFFFF;
+            margin-bottom: 20px;
+        }
+
+        .text-third {
+            position: relative;
+            font-family: "Sansita", sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 24px;
+            line-height: 0.9;
+            color: #FFFFFF;
+            margin-bottom: 20px;
+        }
+
+        .text-video {
+            position: relative;
+            font-family: "Inter", sans-serif;
+            font-style: normal;
+            font-weight: 800;
+            font-size: 130px;
+            line-height: 0.9;
+            color: #009CA5;
+            line-
+        }
+
+        .text-image{
+            position: relative;
+            font-family: "Inter", sans-serif;
+            font-style: normal;
+            line-height: 1;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .text-image.line1 {
+            font-size: 48px;
+            font-weight: 800;
+        }
+
+            .text-image.line2 {
+                font-weight: 400;
+                font-size: 30px;
+            }
+
+        .emp-sidenav {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 111;
+            top: 0;
+            right: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+        }
+
+            .emp-sidenav a {
+                padding: 8px 8px 8px 32px;
+                text-decoration: none;
+                font-size: 25px;
+                color: #818181;
+                display: block;
+                transition: 0.3s;
+            }
+
+                .emp-sidenav a:hover {
+                    color: #f1f1f1;
+                }
+
+            .emp-sidenav .emp-closebtn{
+                position: absolute;
+                top: 0;
+                right: 25px;
+                font-size: 24px;
+                margin-left: 50px;
+            }
+
+        .emp-openbtn {
+            margin-top: 50px;
+            font-size: 30px;
+            cursor: pointer;
+            right: 1%;
+            position: absolute;
+            z-index: 99;
+            color: #818181;
+        }
+
+        .emp-openbtn:hover {
+            color: white;
+        }
+
+        .mask1 {
+            -webkit-mask-image: url(Asset/EmployeeAsset/EventPage/Frame1.png);
+            mask-image: url(Asset/EmployeeAsset/EventPage/Frame1.png);
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+        }
+
+
+    </style>
+</head>
+
+<body>
+
+
+    @if (eventgroup.Count(i => i.Event__FileType == "Image") > 0)
+    {
+        foreach (var g in eventgroup.Where(i => i.Event__FileType == "Image"))
+        {
+            if (g.Event__FileSequenceNo == 1)
+            {
+                <img id="emp-home-gif" src="@g.Event__FilePath" alt="eventThumbnail">
+            }
+            else if (g.Event__Thumbnail == true)
+            {
+                <img id="emp-home-gif" src="Asset/EmployeeAsset/EventPage/event-gif.gif" alt="eventThumbnail">
+            }
+        }
+    }
+    else
+    {
+        <img id="emp-home-gif" src="Asset/EmployeeAsset/EventPage/event-gif.gif" alt="eventThumbnail">
+    }
+    
+
+    <div class="home__nav">
+        <nav>
+            <div class="nav__logo"><img src="/Asset/NamCheongLogo.png" alt="NCL Logo"></div>
+            <ul class="nav__links">
+                <li class="link">
+                    <div class="dropdown">
+                        <button class="nav__btn">
+                            =
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="" @onclick="@(()=>GoTo("Home"))" style="text-align: left;">Home</a>
+                            <a href="" @onclick="@(()=>GoTo("Moment"))" style="text-align: left;">Joyous Moment</a>
+                            <a href="" @onclick="@(()=>GoTo("MyMoment"))" style="text-align: left;">My Moment</a>
+                            <a href="" @onclick="@(()=>BeginLogOut())" style="text-align: left;">Logout</a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <section>
+
+            @foreach (var g in eventgroup)
+            {
+                if (g.Event__ID == EID)
+                {
+                    <div class="event-text-box cursor" @onclick="(()=>GoToSelectedPage())">
+                    <div class="text-second">@g.Event__Title</div>
+                    <div class="text-third">@g.Event__Description</div>
+                    </div>
+                }
+            }
+
+        <img class="white-polygon" src="Asset/EmployeeAsset/white-polygon.png">
+    </section>
+
+        <!-- Video Grid -->
+        @if (eventgroup.Where(i => i.Event__FileType == "Video").Any())
+        {
+        <section style="background-color: white; background-image: linear-gradient(to right, white , #009ca5);">
+            <div class="text-video">Video Gallery</div>
+                @foreach (var g in eventgroup)
+                {
+                    if (g.Event__FileType == "Video" && g.Event__FileSequenceNo == 1)
+                    {
+                        <video class="hover-shadow cursor" disablePictureInPicture style="background:black; width:55vw; height:80vh; object-fit: contain;" onclick="openvidModal('@g.Event__FilePath')">
+                            <source src="@g.Event__FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                }
+            </section>
+        }
+
+        <!-- Image Grid -->
+        @if (eventgroup.Where(i => i.Event__FileType == "Image"&& i.Event__FileSequenceNo == 1).Any())
+        {
+        <section style="flex-direction:column; background:#009CA5;">
+            @foreach (var g in eventgroup)
+            {
+                if (g.Event__FileType == "Image" && g.Event__FileSequenceNo == 1)
+                {
+                    <div class="text-image line1">@g.Event__Title</div>
+                    <div class="text-image line2">Sharing Exiting Moments</div>
+                    <br />
+                    <div class="hover-shadow cursor" onclick="openimgModal()">
+                        <div class="content">
+                            <div class="mask1" style="mask-size: 100%;">
+                            <img src="@g.Event__FilePath" alt="EmpImg" style="width:80vw; height:75vh; object-fit:cover;">
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </section>
+    }
+
+        <!-- Document Grid -->
+        @if (eventgroup.Where(i => i.Event__FileType == "Document").Any())
+        {
+        <section style="height:auto;flex-direction:column;">
+            <h1 style="text-align:center;">Read More</h1>
+            <p style="text-align:center;">Document</p>
+            <hr style="width: 100%; color: #00a1b1;">
+            <div class="row" style="flex-direction:row;  display: flex; justify-content: center; align-items: center;">
+                @foreach (var g in eventgroup)
+                {
+                    if (g.Event__FileType == "Document")
+                    {
+                        <div class="column showit">
+                            <div class="hover-shadow cursor" onclick="openLink('@g.Event__FilePath')">
+                            <div class="content" >
+                                <div class="card-document" style="display:inline-flex;">
+                                    <img src="Asset\EmployeeAsset\EventPage\Doc-Logo.png" alt="EmpDoc" style="width:33%; height:100%; object-fit:cover;">
+                                    <p style="margin: 0 0 0 10px ;">@g.Event__FileDescription</p>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    }
+                }
+            </div>
+            </section>
+        }
+
+    <!-- Video Modal -->
+    <div id="myModal" class="Mymodal">
+        <span class="close cursor" onclick="closevidModal()">&times;</span>
+
+        @if (eventgroup.Count(i=>i.Event__FileType == "Video") > 1)
+        {
+            <span class="emp-openbtn" onclick="openNav()">More Videos</span>
+        }
+
+        <div id="emp-mySidenav" class="emp-sidenav">
+            <a class="emp-closebtn" onclick="closeNav()">Close</a>
+            @foreach (var g in eventgroup)
+            {
+                if (g.Event__FileType == "Video")
+                {
+                    <video class="demo" id="thumbnailIndex+@g.Event__FileSequenceNo" control="false" disablePictureInPicture style="margin-top:1%; width:100%; height:150px; display:inline-block;" onclick="currentVid(@g.Event__FileSequenceNo,'@g.Event__FilePath')">
+                        <source src="@g.Event__FilePath" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                }
+            }
+        </div>
+        <div class="modal-content" >          
+
+            @foreach (var g in eventgroup.Where(i => i.Event__FileType == "Video"))
+            {
+                    <div class="myVid" id="@g.Event__FileSequenceNo">
+                        <video id="VideoHere" controls disablePictureInPicture style="width:100%; height:80vh; object-fit:contain;">
+                            <source id="SourceHere" src="@g.Event__FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="MyColumn" id="column+@g.Event__FileSequenceNo">
+                            <h2 style="color: white;">@g.Event__Title Video</h2>
+                            <p style="color: white;">@g.Event__FileDescription</p>
+                        </div>
+                    </div>
+            }
+
+
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imgModal" class="Mymodal">
+        <span class="close cursor" onclick="closeimgModal()">&times;</span>
+
+        <div class="modal-content">
+            <div class="slideshow-container">
+                @foreach (var g in eventgroup.Where(i=>i.Event__FileType == "Image"))
+                {
+                        <div class="slideshow-mySlides slideshow-fade">
+                            <div class="slideshow-numbertext">@g.Event__FileSequenceNo / @eventgroup.Count(i => i.Event__FileType == "Image")</div>
+                            <img src=@g.Event__FilePath style="width:55vw; height:80vh; vertical-align: middle;">
+                            <div class="MyColumn">
+                                <h2 style="color: white;">@g.Event__Title Image</h2>
+                                <p style="color: white;">@g.Event__FileDescription</p>
+                            </div>
+                        </div>
+                }
+                <a class="slideshow-prev" onclick="plusSlides(-1)">❮</a>
+                <a class="slideshow-next" onclick="plusSlides(1)">❯</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <section id="footer-emp">
+        <div class="footer-emp">
+            
+            @if (eventgroup.Count(i => i.Event__FileType == "Image") > 0)
+            {
+                foreach (var g in eventgroup.Where(i => i.Event__FileType == "Image"))
+                {
+                    if (g.Event__FileSequenceNo == 1)
+                    {
+                        <img id="emp-home-footer-gif" src="@g.Event__FilePath" alt="eventFooterThumbnail">
+                    }
+                    else if (g.Event__Thumbnail == true)
+                    {
+                        <img id="emp-home-footer-gif" src="Asset/EmployeeAsset/EventPage/event-gif.gif" alt="eventFooterThumbnail">
+                    }
+                }
+            }
+            else
+            {
+                <img id="emp-home-footer-gif" src="Asset/EmployeeAsset/EventPage/event-gif.gif" alt="eventFooterThumbnail">
+            }
+
+            <img class="footer-logo" src="Asset/EmployeeAsset/white-logo.png">
+            <div class="line"></div>
+            <div class="text-copyright">© 2024 Nam Cheong Dockyard Sdn Bhd. All Rights Reserved.</div>
+        </div>
+    </section>
+
+</body>
+</html>
+
+<script>
+
+    // Modal toggle animation
+    function openvidModal() {
+        document.getElementById("myModal").style.display = "block";
+        showVid(1);
+    }
+
+    function closevidModal() {
+        document.getElementById("myModal").style.display = "none";
+    }
+
+    var vidIndex = 1;
+
+    function openLink(path) {
+        var linkPath = path;
+        window.open(linkPath);
+    }
+
+    function currentVid(n, path) {
+        showVid(vidIndex = n);
+    }
+
+    function showVid(n) {
+        var i;
+        var vid = document.getElementsByClassName("myVid");
+        var thumbnail = document.getElementsByClassName("demo");
+
+        for (i = 0; i < vid.length; i++) {
+            document.getElementById("VideoHere").controls = true;
+            document.getElementById("VideoHere").load();
+            vid[i].style.display = "none";           
+            thumbnail[i].className = "demo cursor";
+        }
+        document.getElementById(vidIndex).style.display = "block";
+        document.getElementById("thumbnailIndex+" + vidIndex).className = "demo active";
+    }
+
+    function openNav() {
+        document.getElementById("emp-mySidenav").style.width = "350px";
+    }
+
+    function closeNav() {
+        document.getElementById("emp-mySidenav").style.width = "0";
+    }
+
+    function openimgModal() {
+        document.getElementById("imgModal").style.display = "block";
+        showSlides(1);
+    }
+
+    function closeimgModal() {
+        document.getElementById("imgModal").style.display = "none";
+    }
+
+    let slideIndex = 1;
+
+    function plusSlides(n) {
+        showSlides(slideIndex += n);
+    }
+
+    function showSlides(n) {
+        let i;
+        let slides = document.getElementsByClassName("slideshow-mySlides");
+        if (n > slides.length) { slideIndex = 1 }
+        if (n < 1) { slideIndex = slides.length }
+        for (i = 0; i < slides.length; i++) {
+            slides[i].style.display = "none";
+        }
+        slides[slideIndex - 1].style.display = "block";
+    }
+</script>
+
+
+
+
+@code {
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    [Parameter] public int PID { get; set; }
+    [Parameter] public int EID { get; set; }
+    [Parameter] public int emp { get; set; }
+
+    List<Employee> employeesList = new List<Employee>();
+    public Employee employees { get; set; } = new Employee();
+
+    public string? Username { get; set; }
+
+    public Class class2 { get; set; } = new Class();
+    List<Class> classes = new List<Class>();
+
+    public Event event2 { get; set; } = new Event();
+    List<Event> events = new List<Event>();
+
+    private string eventthumbnail = string.Empty;
+    private HashSet<Event> eventgroup = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        // Fetch the class from the SQL database
+        await LoadClass();
+        await LoadEvent();
+        var selectedItem = events.First(c => c.Event__ID == EID);
+
+        @foreach (var e in events)
+        {
+            if (e.Event__FolderPathName == selectedItem.Event__FolderPathName)
+            {
+                eventgroup.Add(e);
+            }
+        }
+    }
+
+    async Task LoadClass()
+    {
+        var result = await Http.GetFromJsonAsync<List<Class>>("https://localhost:7219/api/Classes/GetClass");
+        if (result != null)
+        {   
+            classes = result;
+        }
+    }
+
+    async Task LoadEvent()
+    {
+        var result = await Http.GetFromJsonAsync<List<Event>>("https://localhost:7219/api/Events/GetEvent");
+        if (result != null)
+        {
+            events = result;
+        }
+
+        foreach(var e in events)
+        {
+            if (e.Event__Thumbnail == true && (e.Event__FileType == "png" || e.Event__FileType == "jpg" || e.Event__FileType == "jpeg"))
+            {
+                eventthumbnail = e.Event__FilePath;
+            }
+        }
+
+    }
+
+
+    public void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("/MicrosoftIdentity/Account/SignOut", "/");
+    }
+
+    public void GoToPage(int eventno)
+    {
+        Navigation.NavigateTo("/Employee/" + emp + "/Page/" + PID + "/Event/" + eventno);
+    }
+
+    public void GoToSelectedPage()
+    {
+        Navigation.NavigateTo("/Employee/" + emp + "/Page/" + PID);
+    }
+
+    public void GoTo(string page)
+    {
+        Navigation.NavigateTo("/Employee/" + emp + "/" + page);
+    }
+}
+
+
+
+
+

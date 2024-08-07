@@ -1,0 +1,504 @@
+﻿@page "/Employee/{emp:int}/Page/{PID:int}"
+
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using static System.Net.WebRequestMethods
+@using NCL.Shared.Entities;
+
+@inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style-home.css" />
+    <link rel="stylesheet" href="css/employeeLayout.css" />
+    <link rel="stylesheet" href="css/FilterDropDown.css" />
+    <title>NCL Employee Page</title>
+</head>
+
+<body>
+    <img id="emp-home-gif" src="Asset/EmployeeAsset/PagePage/page-gif.gif" type="image/gif">
+
+    <div class="home__nav">
+        <nav>
+            <div class="nav__logo"><img src="/Asset/NamCheongLogo.png" alt="NCL Logo"></div>
+            <ul class="nav__links">
+                <li class="link">
+                    <div class="dropdown">
+                        <button class="nav__btn">
+                            =
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="" @onclick="@(()=>GoTo("Home"))" style="text-align: left;">Home</a>
+                            <a href="" @onclick="@(()=>GoTo("Moment"))" style="text-align: left;">Joyous Moment</a>
+                            <a href="" @onclick="@(()=>GoTo("MyMoment"))" style="text-align: left;">My Moment</a>
+                            <a href="" @onclick="@(()=>BeginLogOut())" style="text-align: left;">Logout</a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <section>
+        <div class="home-text-box">
+            @foreach(var p in pages)
+            {
+                if(p.Page__ID == PID)
+                {
+                    if(p.Page__SecondName == null || p.Page__SecondName == "")
+                    {
+                        <div class="text-Nam">&emsp;</div>
+                        <div class="text-Cheong">@p.Page__Name</div>
+                        if (classes.Count(i=>i.Class_Page__ID == PID) > 1)
+                        {
+                            <div class="text-Welcome">This page consists of @classes.Count(i => i.Class_Page__ID == PID) classes.<br /> Click on the cards below to explore more on @p.Page__Name @p.Page__SecondName</div>
+                        }
+                        else
+                        {
+                            <div class="text-Welcome">This page consists of @classes.Count(i => i.Class_Page__ID == PID) class.<br /> Click on the cards below to explore more on @p.Page__Name @p.Page__SecondName</div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-Nam">@p.Page__Name</div>
+                        <div class="text-Cheong">@p.Page__SecondName</div>
+                        if (@classes.Count(i => i.Class_Page__ID == PID) > 1)
+                        {
+                            <div class="text-Welcome">This page consists of @classes.Count(i => i.Class_Page__ID == PID) classes.<br /> Click on the cards below to explore more on @p.Page__Name @p.Page__SecondName</div>
+                        }
+                        else
+                        {
+                            <div class="text-Welcome">This page consists of @classes.Count(i => i.Class_Page__ID == PID) class.<br /> Click on the cards below to explore more on @p.Page__Name @p.Page__SecondName</div>
+                        }
+  
+                    }
+                }
+            }
+
+        </div>
+        <img class="white-polygon" src="Asset/EmployeeAsset/white-polygon.png">
+    </section>
+
+
+    <!-- MAIN (Center website) -->
+    <div class="main">
+        @if (classname == null || classname == "All")
+        {
+            <h1 style="text-align:center;">Write something here - Classes</h1>
+            <p style="text-align:center;">All</p>
+
+            <div class="filter-center">
+                <div class="filter-dropdown">
+                    <button id="myDropdownbtn" onclick="openDropFunction()" class="filter-dropbtn">Search</button>
+                    <div id="filter-myDropdown" class="filter-dropdown-content">
+                        <input type="text" placeholder="Search" id="filter-myInput" onkeyup="dropFunction()">
+                        <a @onclick='()=>GoToResult("All", 0)'>All</a>
+                        @foreach (var c in classes)
+                        {
+                            if(c.Class_Page__ID == PID)
+                            {
+                                <a @onclick="()=>GoToResult(c.Class__Name, c.Class__ID)">@c.Class__Name</a>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <hr>
+
+            <!-- Class Grid -->
+
+            <div class="row" id="filter-myDropdown-a">
+                @if (events.Count == 0 || events == null)
+                {
+                    <p class="title">Empty Event</p>
+                }
+                else
+                {
+                    @foreach (var e in eventgroup)
+                    {
+                        <div class="column showit @e.Event__SequenceNo">
+                            <div class="hover-shadow radius cursor">
+                                <div class="content" @onclick="()=>GoToPage(e.Event__ID)">
+                                    @if (e.Event__FileType == "Image" && e.Event__Thumbnail == true)
+                                    {
+                                        <img class="image radius" src="@e.Event__FilePath">
+                                    }
+                                    else if (e.Event__FileType == "Image" && e.Event__FileSequenceNo == 1)
+                                    {
+                                        <img class="image radius" src="@e.Event__FilePath">
+                                    }
+                                    else
+                                    {
+                                        <img class="image radius" src="Asset/EmployeeAsset/Img-NC-Logo-White.jpg">
+                                    }
+
+                                    <p class="title">@e.Event__Title</p>
+                                    <p class="description">@e.Event__Description</p>
+                                    @foreach (var c in classes)
+                                    {
+                                        if (c.Class__ID == e.Event_Class__ID)
+                                        {
+                                            <h6 style="display:none">@c.Class__Name</h6>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+        }
+        else if (classname != null)
+        {
+            <h1 style="text-align:center;">Write something here - Classes</h1>
+            <p style="text-align:center;">@classname</p>
+
+            <div class="filter-center">
+                <div class="filter-dropdown">
+                    <button id="myDropdownbtn" onclick="openDropFunction()" class="filter-dropbtn">Search</button>
+                    <div id="filter-myDropdown" class="filter-dropdown-content">
+                        <input type="text" placeholder="Search" id="filter-myInput" onkeyup="dropFunction()">
+                        <a @onclick='()=>GoToResult("All", 0)'>All</a>
+                        @foreach (var c in classes)
+                        {
+                            if (c.Class_Page__ID == PID)
+                            {
+                                <a @onclick="()=>GoToResult(c.Class__Name, c.Class__ID)">@c.Class__Name</a>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <hr>
+
+            <!-- Class Grid -->
+
+            <div class="row" id="filter-myDropdown-a">
+                @if(isEmpty == false)
+                {
+                    @foreach (var e in eventgroup.Where(i => i.Event_Class__ID == filterclassid))
+                    {
+                                <div class="column showit @e.Event__SequenceNo">
+                                    <div class="hover-shadow radius cursor">
+                                        <div class="content" @onclick="()=>GoToPage(e.Event__ID)">
+                                            @if(e.Event__FileType == "Image" && e.Event__Thumbnail == true)
+                                            {
+                                                <img class="image radius" src="@e.Event__FilePath">
+                                            }
+                                            else if (e.Event__FileType == "Image" && e.Event__FileSequenceNo == 1)
+                                            {
+                                                <img class="image radius" src="@e.Event__FilePath">
+                                            }else
+                                            {
+                                                <img class="image radius" src="Asset/EmployeeAsset/Img-NC-Logo-White.jpg">
+                                            }
+                                            <p class="title">@e.Event__Title</p>
+                                            <p class="description">@e.Event__Description</p>
+                                        </div>
+                                    </div>
+                                </div>                        
+                    }
+                }
+                else
+                {
+                    <p class="title">No Event In This Class</p>
+                }
+
+            </div>
+        }
+
+@*         <!-- Modal -->
+        <div id="myModal" class="modal">
+            <span class="close cursor" onclick="closevidModal()">&times;</span>
+            <div class="modal-content">
+                @foreach (var vid in videos)
+                {
+                    <div class="myVid" id="@vid.Video__ID">
+                        <div class="numbertext">@vid.Video__Name</div>
+                        <video id="Video" controls disablePictureInPicture disableVolume controlsList="noseeking novolume" width="100%" onclick="currentVid(@vid.Video__ID)">
+                            <source src="/Video/@vid.Video__Path" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                }
+
+
+                <div class="MyColumn">
+                    @foreach (var vid in videos)
+                    {
+                        <p>Now Playing</p>
+                        <video class="demo cursor" id="thumbnailIndex+@vid.Video__ID" control="false" disablePictureInPicture style="width:15%; height:100px; display:inline-block;" onclick="currentVid(@vid.Video__ID)">
+                            <source src="/Video/@vid.Video__Path" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                </div>
+
+        </div>
+        </div> *@
+
+    </div>
+
+    <!-- FOOTER -->
+    <section id="footer-emp">
+        <div class="footer-emp">
+            <img id="emp-home-footer-gif" src="Asset/EmployeeAsset/HomePage/emp-home-footer.png">
+            <img class="footer-logo" src="Asset/EmployeeAsset/white-logo.png">
+            <div class="line"></div>
+            <div class="text-copyright">© 2024 Nam Cheong Dockyard Sdn Bhd. All Rights Reserved.</div>
+        </div>
+    </section>
+
+</body>
+</html>
+
+<script src="js/filterDropDown.js"></script>
+
+@* <script>
+
+    filterSelection("all");
+
+    function filterSelection(e) {
+        var x, i;
+        x = document.getElementsByClassName("column");
+        if (e == "all") e = "";
+        for (i = 0; i < x.length; i++) {
+            w3RemoveClass(x[i], "show");
+            if (x[i].className.indexOf(e) > -1) w3AddClass(x[i], "show");
+        }
+    }
+
+    function w3AddClass(element, name) {
+        var i, arr1, arr2;
+        arr1 = element.className.split(" ");
+        arr2 = name.split(" ");
+        for (i = 0; i < arr2.length; i++) {
+            if (arr1.indexOf(arr2[i]) == -1) { element.className += " " + arr2[i]; }
+        }
+    }
+
+    function w3RemoveClass(element, name) {
+        var i, arr1, arr2;
+        arr1 = element.className.split(" ");
+        arr2 = name.split(" ");
+        for (i = 0; i < arr2.length; i++) {
+            while (arr1.indexOf(arr2[i]) > -1) {
+                arr1.splice(arr1.indexOf(arr2[i]), 1);
+            }
+        }
+        element.className = arr1.join(" ");
+    }
+
+    // Modal toggle animation
+    function openvidModal() {
+        document.getElementById("myModal").style.display = "block";
+    }
+
+    function closevidModal() {
+        document.getElementById("myModal").style.display = "none";
+    }
+
+    var vidIndex = 1;
+    showVid(vidIndex);
+
+    function currentVid(n) {
+        showVid(vidIndex = n);
+    }
+
+    function showVid(n) {
+        var i;
+        var vid = document.getElementsByClassName("myVid");
+        var thumbnail = document.getElementsByClassName("demo");
+
+        // var captionText = document.getElementById("caption");
+        // if (n > vid.length) { vidIndex = 1 }
+        // if (n < 1) { vidIndex = vid.length }
+
+        for (i = 0; i < vid.length; i++) {
+            vid[i].style.display = "none";
+            thumbnail[i].className = "demo cursor";
+        }
+        document.getElementById(vidIndex).style.display = "block";
+        document.getElementById("thumbnailIndex+" + vidIndex).className = "demo active";
+
+        // vid[vidIndex-1].style.display = "block";
+        // captionText.innerHTML = vid[vidIndex - 1].alt;
+    }
+
+    // Add active class to the current button (highlight it)
+    var myVidBtnContainer = document.getElementById("myVidBtnContainer");
+
+    function openBtn(evt) {
+        var i, V;
+        V = myVidBtnContainer.getElementsByClassName("btn");
+        for (i = 0; i < V.length; i++) {
+            V[i].className = "btn";
+        }
+        evt.currentTarget.className += " active";
+    }
+
+</script> *@
+
+
+
+
+@code {
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    [Parameter] public int EID { get; set; }
+    [Parameter] public int PID { get; set; }
+    [Parameter] public int emp { get; set; }
+    [Parameter] public string classname { get; set; }
+    [Parameter] public int filterclassid { get; set; }
+
+    private bool isEmpty = true;
+
+    List<Employee> employeesList = new List<Employee>();
+    public Employee employees { get; set; } = new Employee();
+
+    public string? Username { get; set; }
+
+    public Class class2 { get; set; } = new Class();
+    List<Class> classes = new List<Class>();
+    List<Page> pages = new List<Page>();
+
+    public Event event2 { get; set; } = new Event();
+    List<Event> events = new List<Event>();
+    List<Event> eventsonce = new List<Event>();
+
+    private HashSet<Event> eventgroup = new();
+    private HashSet<Class> classgroup = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        // Fetch the class from the SQL database
+        await LoadClass();
+        await LoadEvent();
+        await LoadEventOnce();
+        await LoadPage();
+
+        @foreach (var c in classes)
+        {
+            if (c.Class_Page__ID == PID)
+            {
+                classgroup.Add(c);
+            }
+        }
+
+        @foreach (var c in classgroup)
+        {
+            @foreach (var e in eventsonce)
+            {
+                if (e.Event_Class__ID == c.Class__ID)
+                {
+                    eventgroup.Add(e);
+
+                }
+            }
+
+        }
+    }
+
+    async Task LoadEvent()
+    {
+        var result = await Http.GetFromJsonAsync<List<Event>>("https://localhost:7219/api/Events/GetEvent");
+        if (result != null)
+        {
+            events = result;
+        }
+    }
+
+    async Task LoadEventOnce()
+    {
+        var result = await Http.GetFromJsonAsync<List<Event>>("https://localhost:7219/api/Events/GetEventOnce");
+        if (result != null)
+        {
+            eventsonce = result;
+        }
+    }
+
+    async Task LoadClass()
+    {
+        var result = await Http.GetFromJsonAsync<List<Class>>("https://localhost:7219/api/Classes/GetClass");
+        if (result != null)
+        {   
+            classes = result;
+        }
+    }
+
+    async Task LoadPage()
+    {
+        var result = await Http.GetFromJsonAsync<List<Page>>("https://localhost:7219/api/Pages/GetPage");
+        if (result != null)
+        {
+            pages = result;
+        }
+    }
+
+
+    public void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("/MicrosoftIdentity/Account/SignOut", "/");
+    }
+
+    public void GoToPage()
+    {
+        Navigation.NavigateTo("/Employee/" + emp + "/Page/" + PID + "/Event");
+    }
+
+    public void GoToPage(int eventno)
+    {
+        Navigation.NavigateTo("/Employee/" + emp + "/Page/" + PID + "/Event/" + eventno);
+    }
+
+    public void GoTo(string page)
+    {
+        Navigation.NavigateTo("/Employee/" + emp + "/" + page);
+    }
+
+    public void GoToResult(string classn, int classid)
+    {
+
+        if (events.Where(i => i.Event_Class__ID == classid).Any())
+        {
+            isEmpty = false;
+        }
+        else
+        {
+            isEmpty = true;
+        }
+
+        filterclassid = classid;
+        classname = classn;
+        Navigation.Refresh(false);
+    }
+
+}
+
+
+
+
+

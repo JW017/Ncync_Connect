@@ -1,0 +1,29 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL.Client\\bin\\Debug\\net8.0\\wwwroot\\_framework\\blazor.webassembly.js",
+      "PackagePath": "staticwebassets\\_framework\\blazor.webassembly.js"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL.Client\\obj\\Debug\\net8.0\\compressed\\scmz6xf6f0.gz",
+      "PackagePath": "staticwebassets\\_framework\\blazor.webassembly.js.gz"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.NCL.Client.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.NCL.Client.props",
+      "PackagePath": "build\\NCL.Client.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.NCL.Client.props",
+      "PackagePath": "buildMultiTargeting\\NCL.Client.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.NCL.Client.props",
+      "PackagePath": "buildTransitive\\NCL.Client.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

@@ -1,0 +1,681 @@
+﻿@using static System.Net.WebRequestMethods
+@using Microsoft.AspNetCore.Authorization
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+@using BlazorBootstrap
+@using NCL.Shared.Entities
+@using System.Text
+@using System.IO
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+<link href="_content/Blazor.Bootstrap/blazor.bootstrap.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="css/style-admin.css" />
+<link rel="stylesheet" href="css/style-emppage.css" />
+
+<div class="button-container">
+    <div class="button-box">
+        <h2> Moment Gallery </h2>
+        <Tooltip Class="d-inline-block" Title="Add New Moment">
+                <button class="btn btn-primary" id="addPageBtn" @onclick="OnShowAddModalClick">Add</button>
+        </Tooltip> 
+        <Tooltip Class="d-inline-block" Title="Delete Multiple Moments">
+            <button class="btn btn-primary" @onclick="@(()=>ShowMultipleDeleteMomentDialogAsync(@selectedMoments))" id="deleteM">Delete</button>
+        </Tooltip>
+    </div>
+</div>
+
+<br />
+
+<ConfirmDialog @ref="dialog" />
+
+<Grid TItem="Moment"
+Class="table table-hover table-bordered table-striped"
+DataProvider="MomentsDataProvider"
+AllowFiltering="true"
+AllowPaging="true"
+PageSize="5"
+PageSizeSelectorVisible="true"
+PageSizeSelectorItems="@(new int[] { 5,10,20 })"
+AllowSorting="true"
+AllowSelection="true"
+SelectionMode="GridSelectionMode.Multiple"
+SelectedItemsChanged="OnSelectedItemsChanged"
+HeaderRowCssClass="bg-secondary text-white bg-opacity-55 border-bottom-0"
+Responsive="true">
+
+<GridColumn TItem="Moment" HeaderText="Username" PropertyName="Username" SortKeySelector="item => item.EmployeeEmployee__ID">
+    @foreach(var e in employees.Where(i=>i.Employee__ID == context.EmployeeEmployee__ID)){
+        @e.Employee__Name
+    }
+</GridColumn>
+
+<GridColumn TItem="Moment" HeaderText="Moment Published Date" PropertyName="Moment__DateTime" SortKeySelector="item => item.Moment__DateTime">
+    @context.Moment__DateTime
+</GridColumn>
+
+<GridColumn TItem="Moment" HeaderText="Moment Status" PropertyName="Moment__Status" SortKeySelector="item => item.Moment__Status">
+    @if(@context.Moment__Status == "Pending")
+    {
+        <h6><Badge Color="BadgeColor.Primary">@context.Moment__Status</Badge></h6>
+    }
+    else if(@context.Moment__Status == "Expired")
+    {
+        <h6><Badge Color="BadgeColor.Secondary">@context.Moment__Status</Badge></h6>
+    }
+    else if(@context.Moment__Status == "Approved")
+    {
+        <h6><Badge Color="BadgeColor.Success">@context.Moment__Status</Badge></h6>
+    }
+    else if(@context.Moment__Status == "Rejected")
+    {
+        <h6><Badge Color="BadgeColor.Danger">@context.Moment__Status</Badge></h6>
+    }       
+</GridColumn>
+
+<GridColumn TItem="Moment" HeaderText="Action" Sortable="false" Filterable="false">
+<Tooltip Class="d-inline-block" Title="Moment Approval">
+    <button class="btn btn-primary" @onclick="@(()=>OnShowApprovalModalClick(context.Moment__ID))"><Icon Name="IconName.CardList" /></button> 
+</Tooltip>
+<Tooltip Class="d-inline-block" Title="Delete Moment">
+    <button class="btn btn-primary" @onclick="@(()=>ShowDeleteMomentDialogAsync(context.Moment__ID))"><Icon Name="IconName.Trash" /></button>
+</Tooltip>
+</GridColumn>
+
+</Grid>
+                    
+
+<div class="mt-3">
+Selected Items Count: @selectedMoments.Count
+</div>
+
+    @if (selectedMoments.Count > 0)
+    {
+    <div class="mt-2">
+    Selected Page:
+    <ul>
+
+    @foreach (var i in selectedMoments)
+    {
+    <li>Status: @i.Moment__Status &emsp; @i.Moment__Title</li>
+    }
+    </ul>
+    </div>
+    }
+
+
+<!-- The Approve Moment Modal -->
+<Toasts class="p-3" Messages="messages" AutoHide="true" StackLength="1" Placement="ToastsPlacement.TopRight" />
+
+<Modal @ref="modalApproval" title="Moment Status Approval" Size="ModalSize.Large" IsVerticallyCentered="true" UseStaticBackdrop="true" CloseOnEscape="false">
+    <BodyTemplate>
+                <div class="radius">
+                    <div class="content">
+                    @if (moment.Moment__FileType == "Video")
+                    {
+                        <video controls style="width:100%;">
+                            <source class="radius" src="@moment.Moment__FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                    else if (moment.Moment__FileType == "Image")
+                    {
+                        <img class="image radius" src="/@moment.Moment__FilePath" style="width:100%;">
+                    }
+
+                    @foreach (var e in employees.Where(i => i.Employee__ID == moment.EmployeeEmployee__ID))
+                    {
+                        <h5 class="title">@e.Employee__Name</h5>
+                    }
+                    <div class="date">@moment.Moment__DateTime</div>
+                    <h5>@moment.Moment__Title</h5>
+                    @if (moment.Moment__Description != null)
+                    {
+                        <div class="description">@moment.Moment__Description</div>
+                    }
+                    </div>
+                </div>
+    </BodyTemplate>
+    <FooterTemplate>
+        @if(moment.Moment__Status == "Approved")
+        {
+            <Button @ref="rejectButton" Color="ButtonColor.Danger" @onclick="@(()=>ApprovalAsync(moment.Moment__ID, false))">Reject</Button>
+            <Button @ref="approveButton" Color="ButtonColor.Success" Disabled="true" >Approved</Button>
+        }
+        else if (moment.Moment__Status == "Rejected")
+        {
+            <Button @ref="rejectButton" Color="ButtonColor.Danger" Disabled="true" >Rejected</Button>
+            <Button @ref="approveButton" Color="ButtonColor.Success" @onclick="@(()=>ApprovalAsync(moment.Moment__ID, true))">Approve</Button>
+        }
+        else
+        {
+            <Button @ref="rejectButton" Color="ButtonColor.Danger" @onclick="@(()=>ApprovalAsync(moment.Moment__ID, false))">Reject</Button>
+            <Button @ref="approveButton" Color="ButtonColor.Success" @onclick="@(()=>ApprovalAsync(moment.Moment__ID, true))">Approve</Button>
+        }
+    </FooterTemplate>
+</Modal>
+
+<!-- The Add Moment Modal -->
+<Modal @ref="modalAdd" title="Add New Modal" Size="ModalSize.Large" IsVerticallyCentered="true" UseStaticBackdrop="true" CloseOnEscape="false">
+    <BodyTemplate>
+        <EditForm Model="moment">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="content">
+
+                <div class="form-group row mb-3">
+                    <div>
+                        <label for="MomentTitle">Moment Title:</label>
+                        <InputText @bind-Value="moment.Moment__Title"/>
+                        <ValidationMessage For="@(() => moment.Moment__Title)" />
+                    </div>
+                </div>
+
+                <div class="form-group row mb-3">
+                    <div>
+                        <label for="MomentDesc">Moment Description:</label>
+                        <InputTextArea @bind-Value="moment.Moment__Description" style="width:80%; height:140px;" />
+                        <ValidationMessage For="@(() => moment.Moment__Description)" />
+                    </div>
+                </div>
+
+                <div class="form-group row mb-3">
+                    <div>
+                        <div>Select file:</div>
+                        <InputFile @key=@(inputFileId) OnChange="MultiFileSubmit" accept=".mp4, .jpeg, .png, .gif, .jpg"></InputFile>
+                        <ValidationMessage For="@(() => moment.Moment__FilePath)" />
+                    </div>
+                </div>
+
+            </div>
+        </EditForm>
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" id="resetEventFile" @onclick="@(()=>OnHideAddModalClick(moment.Moment__ID))">Cancel</Button>
+        <Button @ref="addButton" Color="ButtonColor.Primary" @onclick="@(()=>MomentSubmit(moment.Moment__ID))">Add</Button>
+    </FooterTemplate>
+</Modal>
+
+
+
+
+
+
+
+<!-- Moment JavaScript -->
+<script>
+
+    // // Get the modal
+    // var pmodal = document.getElementById("pageModal");
+    // var pemodal = document.getElementById("pageEditModal");
+    // var pvmodal = document.getElementById("pageViewModal");
+
+    // // When the user clicks on <span> (x), close the modal
+    // function ClosePageModal() {
+    //     pmodal.style.display = "none";
+    //     pemodal.style.display = "none";
+    //     pvmodal.style.display = "none";
+    //     document.getElementById("AddPageContent").style.display = "none";
+    // }
+
+    // // When the user clicks the button, open the modal
+    // function OpenPageAdd() {
+    //     pmodal.style.display = "block";
+    //     document.getElementById("AddPageContent").style.display = "block";
+    //     document.getElementById("AddPageTab").className += " active";
+    // }
+
+    // function OpenPageEdit() {
+    //     pemodal.style.display = "block";
+    //     document.getElementById("peContent").style.display = "block";
+    // }
+
+    // function OpenPageView() {
+    //     pvmodal.style.display = "block";
+    //     document.getElementById("pvContent").style.display = "block";
+    // }
+
+    // When the user clicks anywhere outside of the modal, close it
+
+    function openTab2(evt2, tName2) {
+        var k, tabcontent2, tablinks2;
+        tabcontent2 = document.getElementsByClassName("tabcontent2");
+        for (k = 0; k < tabcontent2.length; k++) {
+            tabcontent2[k].style.display = "none";
+        }
+        tablinks2 = document.getElementsByClassName("tablinks2");
+        for (k = 0; k < tablinks2.length; k++) {
+            tablinks2[k].className = tablinks2[k].className.replace(" active", "");
+        }
+        document.getElementById(tName2).style.display = "block";
+        evt2.currentTarget.className += " active";
+    }
+
+    function EnableMomentDeleteBtn() {
+        btn = document.getElementById("deleteM").disabled = false;
+    }
+
+    function DisableMomentDeleteBtn() {
+        btn = document.getElementById("deleteM").disabled = true;
+    }
+
+    window.removeBackdropClass = function () {
+        let backdrop = document.querySelector('.modal-backdrop.fade.show');
+        if (backdrop) {
+            backdrop.classList = ('.modal-backdrop.fade');
+        }
+    };
+
+        function ShowResetButton() {
+        document.getElementById("resetEventFile").disabled = false;
+    }
+
+    function DisableResetButton() {
+        document.getElementById("resetEventFile").disabled = true;
+    }
+
+    </script>
+
+
+
+@code {
+
+    [Parameter] public int admin { get; set; }
+    [Parameter] public int? ID { get; set; }
+
+    public string? Username { get; set; }
+    public Employee employee { get; set; } = new Employee();
+    List<Employee> employees = new List<Employee>();
+
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employee = existingEmployee;
+            admin = employee.Employee__ID;
+        }
+        else
+        {
+            // Navigate back to home page if user is not an admin
+            Navigation.NavigateTo("/", true);
+        }
+    }
+
+    async Task LoadEmployee()
+    {
+        var result = await Http.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees/GetEmployees");
+        if (result != null)
+        {
+            employees = result;
+        }
+    }
+
+    public Moment moment { get; set; } = new Moment();
+    List<Moment> moments = new List<Moment>();
+    private HashSet<Moment> selectedMoments = new();
+
+    private string ErrorMsg { get; set; } = String.Empty;
+    const long maxFileSize = 5000 * 1024 * 100; // 500MB
+    private string FileName { get; set; } = String.Empty;
+    private string FileType { get; set; } = String.Empty;
+
+    private Guid inputFileId = Guid.NewGuid();
+
+    private ConfirmDialog dialog = default!;
+
+    private string CreatePath = string.Empty;
+
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private void ShowMessage(ToastType toastType) => messages.Add(CreateToastMessage(toastType));
+    private void ShowRejectedMessage(ToastType toastType) => messages.Add(CreateRejectedToastMessage(toastType));
+
+    private ToastMessage CreateToastMessage(ToastType toastType)
+    => new ToastMessage
+        {
+            Type = toastType,
+            Title = "Approved Moment",
+            HelpText = $"{DateTime.Now}",
+            Message = $"Successfully approved moment with title: {moment.Moment__Title}",
+        };
+
+    private ToastMessage CreateRejectedToastMessage(ToastType toastType)
+    => new ToastMessage
+    {
+        Type = toastType,
+        Title = "Rejected Moment",
+        HelpText = $"{DateTime.Now}",
+        Message = $"Rejected the moment with title: {moment.Moment__Title}",
+    };
+
+
+    private Button approveButton, addButton, deleteButton, rejectButton;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMoment();
+        await JSRuntime.InvokeVoidAsync("DisableMomentDeleteBtn");
+    }
+
+    async Task DeleteMoment(HashSet<Moment> moment2)
+    {
+        foreach (var m in moment2)
+        {          
+            var targetFilePath = "wwwroot/Moment/" + m.Moment__FilePath;
+            if (System.IO.File.Exists(targetFilePath))
+            {
+                System.IO.File.Delete(targetFilePath);
+            }
+
+            await Http.DeleteAsync("https://localhost:7219/api/Moments/" + m.Moment__ID);
+        }
+
+        await LoadMoment();       
+
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Moment", true);
+    }
+
+    async Task LoadMoment()
+    {
+        var result = await Http.GetFromJsonAsync<List<Moment>>("https://localhost:7219/api/Moments/GetMoment");
+        if (result != null)
+        {
+            moments = result;
+        }
+    } 
+
+    private async Task<BlazorBootstrap.GridDataProviderResult<Moment>> MomentsDataProvider(BlazorBootstrap.GridDataProviderRequest<Moment> request)
+    {
+        await LoadMoment();
+        await LoadEmployee();
+
+        return await Task.FromResult(request.ApplyTo(moments));
+    }
+
+    private Task OnSelectedItemsChanged(HashSet<Moment> moment2)
+    {
+        selectedMoments = moments is not null && moment2.Any() ? moment2 : new();
+        if (selectedMoments.Count > 0)
+        {
+            JSRuntime.InvokeVoidAsync("EnableMomentDeleteBtn");
+        }
+        else
+        {
+            JSRuntime.InvokeVoidAsync("DisableMomentDeleteBtn");
+        }
+        return Task.CompletedTask;
+    }
+
+    private void ResetInputFile()
+    {
+        var targetDeleteMomentPath = "wwwroot/" + moment.Moment__FilePath;
+        if (System.IO.File.Exists(targetDeleteMomentPath))
+        {
+            System.IO.File.Delete(targetDeleteMomentPath);
+        }
+
+        // Change id so that blazor re-renders InputFile as new component
+        inputFileId = Guid.NewGuid();
+        moment = new();
+    }
+
+    //Create a new Moment
+    async Task MomentSubmit(int id)
+    {
+        try
+        {
+            // Post the page name to the server using PostAsJsonAsync
+            var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Moments/UpdateMomentByID/{id}", moment);
+
+            // Ensure the request was successful
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Added New Moment");
+                await LoadMoment();
+                Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Moment", true);
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    // async Task ViewMoment(int id)
+    // {
+    //     var selectedMoment = moments.First(c => c.Moment__ID == id);
+
+    //     //display the item's detailed information
+    //     moment.Moment__Title = selectedMoment.Moment__Title;
+    //     moment.Moment__DateTime = selectedMoment.Moment__DateTime;
+    //     moment.Moment__Description = selectedMoment.Moment__Description;
+    //     moment.Moment__Status = selectedMoment.Moment__Status;
+
+    //     await LoadMoment();
+
+    //     // await JSRuntime.InvokeVoidAsync("OpenPageView");
+    // }
+
+    async Task DeleteMomentByID(int id)
+    {
+        var selectedMoment = moments.First(c => c.Moment__ID == id);
+
+        var targetDeleteMomentPath = "wwwroot/" + selectedMoment.Moment__FilePath;
+        if (System.IO.Directory.Exists(targetDeleteMomentPath))
+        {
+            System.IO.Directory.Delete(targetDeleteMomentPath, true);
+
+            await Http.DeleteAsync("https://localhost:7219/api/Moments/" + id);
+        }
+        else
+        {
+            await Http.DeleteAsync("https://localhost:7219/api/Moments/" + id);
+            Console.WriteLine($"Fail to delete {selectedMoment.Moment__FilePath} moment");
+        }
+
+        await LoadMoment();
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Moment", true);
+    }
+
+    private async Task ShowDeleteMomentDialogAsync(int id)
+    {
+        var selectedMoment = moments.First(c => c.Moment__ID == id);
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Moment",
+            message1: $"Are you sure you want to delete this moment - {selectedMoment.Moment__Title}?",
+
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteMomentByID(selectedMoment.Moment__ID);
+        }
+    }
+
+    private async Task ApprovalAsync(int id, bool status)
+    {
+        var selectedMoment = moments.First(c => c.Moment__ID == id);
+
+
+        if(status == true)
+        {
+            moment.Moment__Status = "Approved";
+
+            await Http.PutAsJsonAsync($"https://localhost:7219/api/Moments/UpdateMomentByID/{id}", moment);
+            approveButton?.ShowLoading("Approving...");
+            await Task.Delay(1500);
+            await LoadMoment();
+
+            await modalApproval.HideAsync();
+            Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Moment", true);
+        }
+        else
+        {
+            moment.Moment__Status = "Rejected";
+
+            await Http.PutAsJsonAsync($"https://localhost:7219/api/Moments/UpdateMomentByID/{id}", moment);
+            rejectButton?.ShowLoading("Rejecting...");
+            await Task.Delay(1500);
+            await LoadMoment();
+
+            await modalApproval.HideAsync();
+            Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Moment", true);            
+        }
+    }
+
+    private async Task ShowMultipleDeleteMomentDialogAsync(HashSet<Moment> moment2)
+    {
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Multiple Moments",
+            message1: $"Are you sure you want to delete these {selectedMoments.Count} selected moments?",
+            message2: "The content in these pages will be deleted permanantly.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteMoment(selectedMoments);
+        }
+    }
+
+    private void CreateMomentFolder()
+    {
+        string path = "wwwroot\\Moment\\Moment_Admin_" + admin;
+
+        // Combine the base path with the new folder path
+        string fullPath = Path.Combine(Environment.CurrentDirectory, path);
+
+        // Check if the folder doesn't exist and then create it
+        if (!Directory.Exists(fullPath))
+        {
+            DirectoryInfo di = Directory.CreateDirectory(fullPath);
+        }
+        else
+        {
+            Console.WriteLine($"This path: {path} already exists.");
+        }
+    }
+
+    private Modal modalApproval, modalAdd;
+
+    private async Task OnShowAddModalClick()
+    {
+        await modalAdd.ShowAsync();
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+    private async Task OnShowApprovalModalClick(int MID)
+    {
+        var selectedItem = moments.First(c => c.Moment__ID == MID);
+
+        //display the item's detailed information
+        moment.Moment__Title = selectedItem.Moment__Title;
+        moment.EmployeeEmployee__ID = selectedItem.EmployeeEmployee__ID;
+        moment.Moment__DateTime = selectedItem.Moment__DateTime;
+        moment.Moment__Description = selectedItem.Moment__Description;
+        moment.Moment__SequenceNo = selectedItem.Moment__SequenceNo;
+        moment.Moment__FilePath = selectedItem.Moment__FilePath;
+        moment.Moment__FileType = selectedItem.Moment__FileType;
+        moment.Moment__Status = selectedItem.Moment__Status;
+        moment.Moment__ID = selectedItem.Moment__ID;
+
+        await modalApproval.ShowAsync();
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+    private async Task OnHideAddModalClick(int id)
+    {
+        var selectedItem = moments.First(c => c.Moment__ID == id);
+
+        if (selectedItem.Moment__FilePath != null)
+        {
+            ResetInputFile();
+        }
+        await modalAdd.HideAsync();
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+    private async Task OnHideModalApprovalClick()
+    {
+        await modalApproval.HideAsync();
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+    public async Task MultiFileSubmit(InputFileChangeEventArgs e)
+    {
+        var index = 0;
+        var browserFiles = e.GetMultipleFiles();
+
+        CreateMomentFolder();
+
+        foreach (var f in browserFiles)
+        {
+            if (f != null)
+            {
+                FileName = f.Name;
+                moment.Moment__Status = "Approved";
+                moment.EmployeeEmployee__ID = admin;
+
+                try
+                {
+                    var fileStream = f.OpenReadStream(maxFileSize);
+                    var shortenFile = "Moment/Moment_Admin_" + moment.EmployeeEmployee__ID + "/" + f.Name;
+                    var randomFile = Path.Combine("wwwroot", shortenFile);
+                    var extension = Path.GetExtension(f.Name);
+                    var shortenFilePath = Path.ChangeExtension(shortenFile, extension);
+                    var targetFilePath = Path.ChangeExtension(randomFile, extension);
+
+                    var targetStream = new FileStream(targetFilePath, FileMode.Create);
+                    await fileStream.CopyToAsync(targetStream);
+                    targetStream.Close();
+
+                    index += 1;
+
+                    if (extension == ".png" || extension == ".jpg" || extension == ".jpg" || extension == ".gif")
+                    {
+                        FileType = "Image";
+                        moment.Moment__FilePath = shortenFilePath;
+                    }
+                    else if (extension == ".mp4")
+                    {
+                        FileType = "Video";
+                        moment.Moment__FilePath = shortenFilePath;
+                    }
+              
+                    moment.Moment__FileType = FileType;
+                    moment.Moment__SequenceNo = index;
+                    
+
+                    await JSRuntime.InvokeVoidAsync("ShowResetButton");
+
+                    var result = await Http.PostAsJsonAsync("https://localhost:7219/api/Moments/AddMoments", moment);
+
+                }
+                catch (Exception exception)
+                {
+                    ErrorMsg = exception.Message;
+                }
+            }
+        }
+    }
+}
+

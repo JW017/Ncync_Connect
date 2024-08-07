@@ -1,0 +1,433 @@
+﻿@page "/Employee/{emp:int}/Moment"
+
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using static System.Net.WebRequestMethods
+@using NCL.Shared.Entities;
+
+@inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style-home.css" />
+    <link rel="stylesheet" href="css/employeeLayout.css" />
+    <link rel="stylesheet" href="css/FilterDropDown.css" />
+    <title>NCL Employee Class</title>
+
+
+    <style>
+        .event-text-box {
+            position: absolute;
+            margin: auto 10% auto 0;
+            left: 10vw;
+            width: 50vw;
+            display: flex;
+            flex-direction: column;
+            align-items: normal;
+            text-align: left;
+            gap: 0px;
+            background-color: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .text-first {
+            position: relative;
+            font-family: "Sansita", sans-serif;
+            font-style: normal;
+            font-weight: 700;
+            font-size: 30px;
+            line-height: 0.9;
+            color: #FFFFFF;
+            margin: 20px 0px 5px 0px;
+        }
+
+        .text-second {
+            position: relative;
+            font-family: "Forum", serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 100px;
+            line-height: 0.9;
+            color: #FFFFFF;
+            margin: 25px 0px 25px 0px;
+        }
+
+        .text-third {
+            position: relative;
+            font-family: "Sansita", sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 24px;
+            line-height: 0.9;
+            color: #FFFFFF;
+            margin: 5px 0px 20px 0px;
+        }
+
+        .text-video {
+            position: relative;
+            font-family: "Inter", sans-serif;
+            font-style: normal;
+            font-weight: 800;
+            font-size: 130px;
+            line-height: 0.9;
+            color: #009CA5;
+        }
+
+        .text-image{
+            position: relative;
+            font-family: "Inter", sans-serif;
+            font-style: normal;
+            line-height: 1;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .text-image.line1 {
+            font-size: 48px;
+            font-weight: 800;
+        }
+
+            .text-image.line2 {
+                font-weight: 400;
+                font-size: 30px;
+            }
+
+        .emp-sidenav {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 111;
+            top: 0;
+            right: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+        }
+
+            .emp-sidenav a {
+                padding: 8px 8px 8px 32px;
+                text-decoration: none;
+                font-size: 25px;
+                color: #818181;
+                display: block;
+                transition: 0.3s;
+            }
+
+                .emp-sidenav a:hover {
+                    color: #f1f1f1;
+                }
+
+            .emp-sidenav .emp-closebtn {
+                position: absolute;
+                top: 0;
+                right: 25px;
+                font-size: 24px;
+                margin-left: 50px;
+            }
+
+        .mask1 {
+            -webkit-mask-image: url(Asset/EmployeeAsset/EventPage/Frame1.png);
+            mask-image: url(Asset/EmployeeAsset/EventPage/Frame1.png);
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+        }
+
+
+    </style>
+</head>
+
+<body>
+
+    <img id="emp-home-gif" src="/Asset/EmployeeAsset/MomentPage/joyous-gif.gif" alt="eventThumbnail">
+    
+    <div class="home__nav">
+        <nav>
+            <div class="nav__logo"><img src="/Asset/NamCheongLogo.png" alt="NCL Logo"></div>
+            <ul class="nav__links">
+                <li class="link">
+                    <div class="dropdown">
+                        <button class="nav__btn">
+                            =
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="" @onclick="@(()=>GoTo("Home"))" style="text-align: left;">Home</a>
+                            <a href="" @onclick="@(()=>GoTo("Moment"))" style="text-align: left;">Joyous Moment</a>
+                            <a href="" @onclick="@(()=>GoTo("MyMoment"))" style="text-align: left;">My Moment</a>
+                            <a href="" @onclick="@(()=>BeginLogOut())" style="text-align: left;">Logout</a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <section>
+        <div class="event-text-box">
+                    <div class="text-first">SHARE YOUR MEMORIES</div>
+                    <div class="text-second">Joyous Moments</div>
+                    <div class="text-third">Whether it’s a personal achievement, a special family event, a fun hobby, or a professional milestone, we want to celebrate these moments together.</div>
+        </div>
+        <img class="white-polygon" src="Asset/EmployeeAsset/white-polygon.png">
+    </section>
+
+     
+    <div class="main">
+        <h1 style="text-align:center;">Joyous Moments Gallery</h1>
+
+        <!-- filter Grid -->
+        <div class="filter-center">
+            <input id="filter-box" type="text" placeholder="Search..." onkeyup="filterFunction('filter-box', 'filter-myDropdown-moment', 'div')">
+        </div>
+        <hr>
+
+        @if (momentgroup.Any())
+        {
+
+            <!-- Moment Grid -->
+            <div class="row" id="filter-myDropdown-moment">
+                @if (moments.Count == 0 || moments == null)
+                {
+                    <p class="title">Empty Moments</p>
+                }
+                else
+                {
+                    @foreach (var m in momentgroup)
+                    {
+                        <div class="column showit @m.Moment__ID">
+                            <div class="hover-shadow radius cursor" @onclick="@(()=>ModalViewClick(m.Moment__ID))">
+                                <div class="content">
+                                    @foreach(var e in employeesList.Where(i=>i.Employee__ID == m.EmployeeEmployee__ID))
+                                    {
+                                        <div class="top">
+                                            <div class="userDeatils">
+                                                <div class="profileImg">
+                                                    <img src="@m.Moment__FilePath" alt="user" class="cover">
+                                                </div>
+                                                <h3>@e.Employee__Name<br><span>@m.Moment__DateTime</span></h3>
+                                            </div>
+                                        </div>
+                                    }
+                                    
+                                    <img class="image radius" src="@m.Moment__FilePath">
+
+                                    <div class="title">
+                                        <h3>@m.Moment__Title</h3>
+                                    </div>
+                                                                        
+                                    @if(m.Moment__Description != null)
+                                    {
+                                        <div class="hideContent">@m.Moment__Description</div>
+                                    }                                    
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+        else
+        {
+            <p class="title">No Moment Shared</p>
+        }
+    </div>
+
+    <!-- FOOTER -->
+    <section id="footer-emp">
+        <div class="footer-emp">
+            <img id="emp-home-footer-gif" src="Asset/EmployeeAsset/HomePage/emp-home-footer.png" alt="eventFooterThumbnail">
+            <img class="footer-logo" src="Asset/EmployeeAsset/white-logo.png">
+            <div class="line"></div>
+            <div class="text-copyright">© 2024 Nam Cheong Dockyard Sdn Bhd. All Rights Reserved.</div>
+        </div>
+    </section>
+
+    <!-- Moment Modal -->
+    <div id="momentModal" class="Mymodal">
+        <span class="close cursor" onclick="closemomentModal()">&times;</span>
+
+        <div class="modal-content">
+            <div class="slideshow-container">
+
+                    <div class="slideshow-mySlides slideshow-fade">
+
+                    @if (moment.Moment__FileType == "Video")
+                    {
+                        <video controls style="width:100%;height:80vh; vertical-align: middle;">
+                            <source class="radius" src="@moment.Moment__FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                    else if (moment.Moment__FileType == "Image")
+                    {
+                        <img class="image radius" src="/@moment.Moment__FilePath" style="width:100%; height:80vh; vertical-align: middle;">
+                    }
+
+                        <div class="MyColumn">
+
+                            <div class="title" style="color: white; display:flex">
+                            <h3>@moment.Moment__Title &emsp;</h3>
+                            @foreach (var e in employeesList.Where(i => i.Employee__ID == moment.EmployeeEmployee__ID))
+                            {
+                                <p style="color: dimgrey;">@e.Employee__Name<br/>@moment.Moment__DateTime.ToShortDateString()</p>
+                            }
+                            </div>
+
+                            @if (moment.Moment__Description != null)
+                            {
+                                <p style="color: white;">@moment.Moment__Description</p>
+
+                            }
+                        </div>
+                    </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>
+
+<script src="js/filterDropDown.js"></script>
+<script>
+    window.removeBackdropClass = function () {
+        let backdrop = document.querySelector('.modal-backdrop.fade.show');
+        if (backdrop) {
+            backdrop.classList = ('.modal-backdrop.fade');
+        }
+    };
+
+    function openmomentModal() {
+        document.getElementById("momentModal").style.display = "block";
+    }
+
+    function closemomentModal() {
+        document.getElementById("momentModal").style.display = "none";
+    }
+
+</script>
+
+
+
+
+@code {
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    [Parameter] public int EID { get; set; }
+    [Parameter] public int emp { get; set; }
+
+    List<Employee> employeesList = new List<Employee>();
+    public Employee employees { get; set; } = new Employee();
+    public string? Username { get; set; }
+
+    private HashSet<Moment> momentgroup = new();
+    List<Moment> moments = new List<Moment>();
+    public Moment moment { get; set; } = new Moment();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        // Fetch the class from the SQL database
+        await LoadMoment();
+        await LoadEmployee();
+
+        @foreach (var m in moments)
+        {
+            if (m.Moment__Status == "Approved")
+            {
+                momentgroup.Add(m);
+            }
+        }
+    }
+
+    async Task LoadMoment()
+    {
+        var result = await Http.GetFromJsonAsync<List<Moment>>("https://localhost:7219/api/Moments/GetMoment");
+        if (result != null)
+        {
+            moments = result;
+        }
+    }
+
+    async Task LoadEmployee()
+    {
+        var result = await Http.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees/GetEmployees");
+        if (result != null)
+        {
+            employeesList = result;
+        }
+    }
+
+    // private Modal modalView = default!;
+
+    private async Task ModalViewClick(int MID)
+    {
+        var selectedItem = moments.First(c => c.Moment__ID == MID);
+
+        //display the item's detailed information
+        moment.Moment__Title = selectedItem.Moment__Title;
+        moment.EmployeeEmployee__ID = selectedItem.EmployeeEmployee__ID;
+        moment.Moment__DateTime = selectedItem.Moment__DateTime;
+        moment.Moment__Description = selectedItem.Moment__Description;
+        moment.Moment__SequenceNo = selectedItem.Moment__SequenceNo;
+        moment.Moment__FilePath = selectedItem.Moment__FilePath;
+        moment.Moment__FileType = selectedItem.Moment__FileType;
+        moment.Moment__Status = selectedItem.Moment__Status;
+        moment.Moment__ID = selectedItem.Moment__ID;
+
+        await JSRuntime.InvokeVoidAsync("openmomentModal");
+    }
+
+    private bool isEmpty = true;
+
+    public void GoToResult(int EID)
+    {
+        if (moments.Where(i => i.EmployeeEmployee__ID == EID).Any())
+        {
+            isEmpty = false;
+        }
+        else
+        {
+            isEmpty = true;
+        }
+        Navigation.Refresh(false);
+    }
+
+    public void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("/MicrosoftIdentity/Account/SignOut", "/");
+    }
+
+    public void GoTo(string page)
+    {
+        Navigation.NavigateTo("/Employee/" + emp + "/" + page);
+    }
+}
+
+
+
+
+

@@ -1,0 +1,1584 @@
+﻿
+
+@using static System.Net.WebRequestMethods
+@using Microsoft.AspNetCore.Authorization
+
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+@using BlazorBootstrap
+@using NCL.Shared.Entities
+@using System.Text
+
+<style>
+
+    /* Style the tab */
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+        /* Style the buttons inside the tab */
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+            /* Change background color of buttons on hover */
+            .tab button:hover {
+                background-color: #ddd;
+            }
+
+            /* Create an active/current tablink class */
+            .tab button.active {
+                background-color: #ccc;
+            }
+
+    /* Style the tab content */
+    .tabcontent {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+</style>
+
+
+@if (events == null)
+{
+<p><em>Loading...</em></p>
+}
+else
+{
+<div class="button-container">
+    <div class="button-box">
+        <h2> Event Management </h2>
+        <Tooltip Class="d-inline-block" Title="Add New Event">
+        <button class="btn btn-primary" @onclick="OpenAddEventModal" id="addEventBtn">Add</button>
+        </Tooltip>
+        <Tooltip Class="d-inline-block" Title="Delete Multiple Events">
+        <button class="btn btn-primary" @onclick="@(()=>ShowMultipleDeleteEventDialogAsync(@selectedEvents))" id="deleteEvent">Delete</button>
+        </Tooltip>
+    </div>
+</div>
+
+<br />
+
+<ConfirmDialog @ref="dialog" />
+
+<Grid TItem="Event"
+Class="table table-hover table-bordered table-striped"
+DataProvider="EventsDataProvider"
+AllowFiltering="true"
+AllowPaging="true"
+PageSize="10"
+PageSizeSelectorVisible="true"
+PageSizeSelectorItems="@(new int[] { 5,10,20 })"
+AllowSorting="true"
+AllowSelection="true"
+SelectionMode="GridSelectionMode.Multiple"
+SelectedItemsChanged="OnSelectedItemsChanged"
+HeaderRowCssClass="bg-secondary text-white bg-opacity-55 border-bottom-0"
+Responsive="true">
+
+<GridColumn TItem="Event" HeaderText="Sequence No." PropertyName="Event__SequenceNo" SortKeySelector="item => item.Event__SequenceNo" FilterTextboxWidth="70">
+@context.Event__SequenceNo
+</GridColumn>
+
+<GridColumn TItem="Event" HeaderText="Event Title" PropertyName="Event__Title" SortKeySelector="item => item.Event__Title" FilterTextboxWidth="100">
+@context.Event__Title
+</GridColumn>
+
+<GridColumn TItem="Event" HeaderText="Class" PropertyName="Event_Class__ID" SortKeySelector="item => item.Event_Class__ID" FilterTextboxWidth="70">
+@foreach (var c in classes)
+{
+if (c.Class__ID == context.Event_Class__ID)
+{
+@c.Class__Name
+}
+}    
+</GridColumn> 
+
+<GridColumn TItem="Event" HeaderText="Action" Filterable="false" Sortable="false">
+<Tooltip Class="d-inline-block" Title="View Event">
+<Button class="btn btn-primary" id="EventVBtn" @onclick="@(()=>ViewItem(context.Event__ID))"><Icon Name="IconName.CardList" /></Button>
+</Tooltip>
+<Tooltip Class="d-inline-block" Title="Edit Event">
+<Button class="btn btn-primary" id="EventEBtn" @onclick="@(()=>EditItem(context.Event__ID))"><Icon Name="IconName.PencilSquare" /></Button>
+</Tooltip>
+<Tooltip Class="d-inline-block" Title="Delete Event">
+<Button class="btn btn-primary" @ref="deleteButton" @onclick="@(()=>ShowDeleteEventDialogAsync(context.Event__ID))"><Icon Name="IconName.Trash" /></Button>
+</Tooltip>
+</GridColumn>
+        
+</Grid>
+                    
+
+<div class="mt-3">
+Selected Items Count: @selectedEvents.Count
+</div>
+
+@if (selectedEvents.Count > 0)
+{
+<div class="mt-2">
+Selected Events:
+<ul>
+@foreach (var g in selectedEvents)
+{
+<li>@g.Event__Title</li>
+}
+</ul>
+</div>
+}
+
+}
+
+<!-- The Add Event Modal -->
+<div id="addEventModal" class="modal">
+
+    <!-- Add Event content -->
+    <div class="modal-content">
+        <span id="closeEvent" class="close" @onclick="@(()=>ResetCloseEventModal(true))">&times;</span>
+        <div class="tab">
+            <button id="AddEventTab" class="tablinks" onclick="openTab(event, 'AddEventContent')">Add New Event</button>
+        </div>
+
+        <div id="AddEventContent" class="tabcontent">
+                <EditForm Model="event2">
+                    <DataAnnotationsValidator />
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="pName">Page Name:</label>
+                        <InputSelect id="pName" @bind-Value="pName" class="form-control">
+                            <option value="0">Please select a page</option>
+                            @foreach (var p in pages)
+                            {
+                                <option value="@p.Page__ID">@p.Page__Name @p.Page__SecondName</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                @if(pName != 0 )
+                {
+                <div style="margin: 0px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="cName">Class Name:</label>
+                        <InputSelect id="cName" @bind-Value="event2.Event_Class__ID" class="form-control">
+                            <option value="0">Please select a class</option>
+                                @foreach (var c in classes.Where(i => i.Class_Page__ID == pName))
+                            {
+                                <option value="@c.Class__ID">@c.Class__Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                }
+
+                        <div style="margin: 20px 0px 20px 0px;">
+                        <label for="EventName">Event Name:</label>
+                        <InputText id="EventName" @bind-Value="event2.Event__Title" class="form-control" />
+                        <ValidationMessage For="@(() => event2.Event__Title)" />
+                        </div>
+
+                    <div style="margin: 20px 0px 20px 0px; display: flex">
+                    <div>
+                    <label for="videoLoc">Event Description:</label>
+                    <InputTextArea @bind-Value="event2.Event__Description" MaxWords="5" />
+                    <ValidationMessage For="@(() => event2.Event__Description)" />
+                    </div>
+                    </div>
+
+                <div style="margin: 20px 0px 20px 0px; display: flex">
+                    <div>
+                        <label for="videoType">Sequence No:</label>
+                        <InputNumber @bind-Value="event2.Event__SequenceNo" class="form-control" />
+                        <ValidationMessage For="@(() => event2.Event__SequenceNo)" />
+                    </div>
+                </div>
+
+                    <div style="margin: 20px 0px 20px 0px; display: flex">
+                        <div>
+                        <div>Select your event file(s):</div>
+                        <InputFile @key=@(inputFileId) OnChange="MultiFileSubmit" accept=".mp4,.jpg,.jpeg,.png,.pdf" multiple></InputFile>
+                        <ValidationMessage For="@(() => event2.Event__FilePath)" />
+                        </div>
+                    </div>
+
+                <button type="button" class="btn btn-secondary" @onclick="ResetInputFile">Reset</button>
+                <Button @ref="addButton" class="btn btn-primary" @onclick="@(()=>EventSubmit())">Upload Selected File</Button>
+                
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(ErrorMsg))
+                {
+                    <div>Error: @ErrorMsg</div>
+                }
+        </div>
+      
+    </div>
+</div>
+
+<!-- The Edit Event Modal -->
+<div id="editEventModal" class="modal">
+    <!-- Edit Video content -->
+    <div class="modal-content">
+        <span id="closeEditEvent" class="close" @onclick="@(()=>ResetCloseEventModal(false))">&times;</span>
+        <div class="tab">
+            <button id="EditEventTab" class="tablinks" onclick="openTab(event, 'eeContent')">Edit Event</button>
+            <button id="EditEventFileTab" class="tablinks" onclick="openTab(event, 'efeContent')">Edit Event File</button>            
+        </div>
+
+        <div class="tabcontent" id="eeContent">
+            <EditForm Model="event2">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="cName">Class Name:</label>
+                        <InputSelect id="cName" @bind-Value="event2.Event_Class__ID" class="form-control">
+                            <option value="0">Please select a class</option>
+                            @foreach (var c in classes)
+                            {
+                                <option value="@c.Class__ID">@c.Class__Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => event2.Event_Class__ID)" />
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px;">
+                    <label for="EventName">Event Name:</label>
+                    <InputText id="EventName" @bind-Value="event2.Event__Title" class="form-control" />
+                    <ValidationMessage For="@(() => event2.Event__Title)" />
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px; display: flex">
+                    <div>
+                        <label for="videoLoc">Event Description:</label>
+                        <InputTextArea @bind-Value="event2.Event__Description" style="width: 900px; height: 100px;" />
+                        <ValidationMessage For="@(() => event2.Event__Description)" />
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px; display: flex">
+                    <div>
+                        <label for="videoType">Sequence No:</label>
+                        <InputNumber @bind-Value="event2.Event__SequenceNo" class="form-control" />
+                        <ValidationMessage For="@(() => event2.Event__SequenceNo)" />
+                    </div>
+                </div>
+
+                @* <button type="submit" class="btn btn-primary" @onclick="@(()=>EventEditSubmit(event2.Event__ID, 2))">Save</button> *@
+                <Button @ref="saveButton" Color="ButtonColor.Primary" @onclick="@(()=>EventEditSubmit(event2.Event__ID, 2))" >Save</Button>
+
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(ErrorMsg))
+            {
+                <div>Error: @ErrorMsg</div>
+            }
+        </div>
+
+        <div class="tabcontent" id="efeContent">
+                <Tabs @ref="tabs" EnableFadeEffect="true">
+                    <Tab Name="Video" IsActive="true">
+                        <TitleTemplate>
+                            <Icon Name="IconName.HouseFill" /> Video
+                        </TitleTemplate>
+                        <Content>
+                            <div class="row">
+                            @if (events.Where(i => i.Event__FileType == "Video" && i.Event__FolderPathName == event2.Event__FolderPathName).Any())
+                                {
+                                    foreach (var v in events)
+                                    {
+                                        if (v.Event__FolderPathName == event2.Event__FolderPathName && v.Event__FileType == "Video")
+                                        {
+                                            <div class="column @v.Event__ID" @onclick="()=>OnShowModalClick(v.Event__ID,1)">
+                                                <div class="hover-shadow cursor">
+                                                    <div class="content">
+                                                        <video width="100%">
+                                                            <source src="@v.Event__FilePath" type="video/mp4">
+                                                            Your browser does not support the video tag.
+                                                        </video>
+
+                                                        <div style="margin: 20px 0px 20px 0px; display: flex">
+                                                            <div>
+                                                                <label for="efseq">Sequence No:</label>
+                                                                @v.Event__FileSequenceNo
+                                                            </div>
+                                                        </div>
+                                                        <div style="margin: 20px 0px 20px 0px; display: flex">
+                                                        <Switch @bind-Value="@v.Event__Thumbnail" Disabled="@disabled" Label="Set as Thumbnail" />
+                                                        </div>
+                                                        <div style="margin: 20px 0px 20px 0px;display: flex">
+                                                            <div>
+                                                                <label for="efDesc">Event Description:</label>
+                                                                @v.Event__FileDescription
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <div style="margin: 20px 0px 50px 0px;display: flex">
+                                        <div>
+                                            <h1>No Video Uploaded</h1>
+                                            <p>If you wanted to add more Videos into this event, <br>click the below button</p>
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
+                        <Button Color="ButtonColor.Primary" @onclick="()=>OnShowAddModalClick(event2.Event__FolderPathName,1)" Style="width:30%;">Add</Button>
+                        </Content>
+                    </Tab>
+
+                    <Tab Title="Image" Name="Image">
+                        <TitleTemplate>
+                            <Icon Name="IconName.PersonFill" /> Image
+                        </TitleTemplate>
+                        <Content>
+                            <div class="row">
+                            @if (events.Where(i => i.Event__FileType == "Image" && i.Event__FolderPathName == event2.Event__FolderPathName).Any())
+                                {
+                                    foreach (var v in events)
+                                    {
+                                        if (v.Event__FolderPathName == event2.Event__FolderPathName && v.Event__FileType == "Image")
+                                        {
+                                          
+                                        <div class="column @v.Event__ID" @onclick="()=>OnShowModalClick(v.Event__ID,2)">
+                                            <div class="hover-shadow cursor">
+                                                <div class="content">
+                                                    <img src="/@v.Event__FilePath" style="width:100%;">
+
+                                                    <div style="margin: 20px 0px 20px 0px; display: flex">
+                                                        <div>
+                                                            <label for="efseq">Sequence No:</label>
+                                                            @v.Event__FileSequenceNo
+                                                        </div>
+                                                    </div>
+
+                                                    <div style="margin: 20px 0px 20px 0px; display: flex">
+                                                        <Switch @bind-Value="@v.Event__Thumbnail" Disabled="@disabled" Label="Set as Thumbnail" />
+                                                    </div>
+
+                                                    <div style="margin: 20px 0px 20px 0px;">
+                                                        <div>
+                                                            <label for="efDesc">Event Description:</label>
+                                                            @v.Event__FileDescription
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>     
+                                        }
+                                    }
+                                }
+                                else
+                                {                             
+                                <div style="margin: 20px 0px 50px 0px;display: flex">
+                                    <div>
+                                        <h1>No Image Uploaded</h1>
+                                        <p>If you wanted to add more Images into this event, <br>click the below button</p>
+                                    </div>
+                                </div>
+                                }
+                            </div>
+                        <Button Color="ButtonColor.Primary" @onclick="()=>OnShowAddModalClick(event2.Event__FolderPathName,2)" Style="width:30%;">Add</Button>
+                        </Content>
+                    </Tab>
+
+                    <Tab Title="Document" Name="Document">
+                        <TitleTemplate>
+                            <Icon Name="IconName.PhoneFill" /> Document
+                        </TitleTemplate>
+                        <Content>
+                            <div class="row">
+                            @if (events.Where(i => i.Event__FileType == "Document" && i.Event__FolderPathName == event2.Event__FolderPathName).Any())
+                                {
+                                    @foreach (var v in events)
+                                    {
+                                        if (v.Event__FolderPathName == event2.Event__FolderPathName && v.Event__FileType == "Document")
+                                        {
+                                        <div class="column @v.Event__ID" @onclick="()=>OnShowModalClick(v.Event__ID,3)">
+                                            <div class="hover-shadow cursor">
+                                                    <div class="content">
+                                                    <PdfViewer Class="mb-3 overflow-hidden" style="height:50vh;"
+                                                               Url="@v.Event__FilePath" />
+                                                        
+                                                        <div style="margin: 20px 0px 20px 0px; display: flex">
+                                                            <div>
+                                                                <label for="efseq">Sequence No:</label>
+                                                                @v.Event__FileSequenceNo
+                                                            </div>
+                                                        </div>
+
+                                                        <div style="margin: 20px 0px 20px 0px;">
+                                                            <div>
+                                                                <label for="efDesc">Event Description:</label>
+                                                                @v.Event__FileDescription
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                }
+                                else
+                                {                               
+                                <div style="margin: 20px 0px 50px 0px;display: flex">
+                                    <div>
+                                        <h1>No Document Uploaded</h1>
+                                        <p>If you wanted to add more Documents into this event, <br>click the below button</p>
+                                    </div>
+                                </div>
+                                }                                 
+                            </div>
+                        <Button Color="ButtonColor.Primary" @onclick="()=>OnShowAddModalClick(event2.Event__FolderPathName,3)" Style="width:30%;">Add</Button>
+                        </Content>
+                    </Tab>
+                </Tabs>
+            @if (!string.IsNullOrEmpty(ErrorMsg))
+            {
+                <div>Error: @ErrorMsg</div>
+            }
+        </div>
+
+        <Toasts class="p-3" Messages="messages" AutoHide="true" StackLength="1" Placement="ToastsPlacement.TopRight" />
+
+        <Modal @ref="modal" title="Edit Event File" Size="ModalSize.Large" IsVerticallyCentered="true" UseStaticBackdrop="true" CloseOnEscape="false">
+        <BodyTemplate>
+                <EditForm Model="event2">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="content" >
+                        @if(event2.Event__FileType == "Video"){
+                            <video controls style="width:100%;">
+                                <source src="@event2.Event__FilePath" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        }
+                        else if (event2.Event__FileType == "Image")
+                        {
+                            <img src="/@event2.Event__FilePath" style="width:100%;">
+                        }
+                        else if (event2.Event__FileType == "Document")
+                        {
+                            <PdfViewer Class="mb-3"
+                                       Url="@event2.Event__FilePath" />
+                        }
+                            
+                            <div style="margin: 20px 0px 20px 0px; display: flex">
+                                <div>
+                                    <label for="efseq">Sequence No:</label>
+                                    <InputNumber @bind-Value="event2.Event__FileSequenceNo" class="form-control" />
+                                <ValidationMessage For="@(() => event2.Event__FileSequenceNo)" />
+                                </div>
+                            </div>
+
+                        @if (eventno == 1 || eventno == 2)
+                        {
+                            <div style="margin: 20px 0px 20px 0px; display: flex">
+                                @if (event2.Event__Thumbnail == true)
+                                {
+                                    <Switch @bind-Value="event2.Event__Thumbnail" Label="Set as Thumbnail" />
+                                }
+                                else
+                                {
+                                    <Switch @bind-Value="event2.Event__Thumbnail" Label="Does Not Set as Thumbnail" />
+                                }
+                            </div>
+                        }
+
+                            <div style="margin: 20px 0px 20px 0px;">
+                                <div>
+                                    <label for="efDesc">Event Description:</label>
+                                    <InputTextArea @bind-Value="event2.Event__FileDescription" style="width:200px; height:140px" />
+                                    <ValidationMessage For="@(() => event2.Event__Description)" />
+                                </div>
+                            </div>
+                        </div>              
+            </EditForm>
+        </BodyTemplate>
+        <FooterTemplate>
+            <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
+                @if(eventno == 1)
+                {
+                    <Button @ref="deleteButton" Color="ButtonColor.Danger" @onclick="@(()=>ShowDeleteEventFileDialogAsync(event2.Event__ID, 1))">Delete File</Button>
+                    <Button @ref="saveButton" Color="ButtonColor.Primary" @onclick="@(()=>EventEdit(event2.Event__ID,1))">Save</Button>
+                }else if(eventno == 2)
+                {
+                    <Button @ref="deleteButton" Color="ButtonColor.Danger" @onclick="@(()=>ShowDeleteEventFileDialogAsync(event2.Event__ID, 2))">Delete File</Button>
+                    <Button @ref="saveButton" Color="ButtonColor.Primary" @onclick="@(()=>EventEdit(event2.Event__ID,2))">Save</Button>
+                }
+                else if (eventno == 3)
+                {
+                    <Button @ref="deleteButton" Color="ButtonColor.Danger" @onclick="@(()=>ShowDeleteEventFileDialogAsync(event2.Event__ID, 3))">Delete File</Button>
+                    <Button @ref="saveButton" Color="ButtonColor.Primary" @onclick="@(()=>EventEdit(event2.Event__ID,3))">Save</Button>
+                }
+            </FooterTemplate>
+    </Modal>
+
+        <Modal @ref="modalAdd" title="Add Event File" Size="ModalSize.Large" IsVerticallyCentered="true" UseStaticBackdrop="true" CloseOnEscape="false">
+            <BodyTemplate>
+                <EditForm Model="event2">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="content">
+                        @if (eventno == 1)
+                        {
+                            <div class="form-group row mb-3">
+                                <div>
+                                    <div>Select your event file(s):</div>
+                                    <InputFile @key=@(inputFileId) OnChange="MultiFileSubmit" accept=".mp4"></InputFile>
+                                    <ValidationMessage For="@(() => event2.Event__FilePath)" />
+                                </div>
+                            </div>
+                        }
+                        else if (eventno == 2)
+                        {
+                        <div class="form-group row mb-3">
+                            <div>
+                                <div>Select your event file(s):</div>
+                                <InputFile @key=@(inputFileId) OnChange="MultiFileSubmit" accept=".jpg,.png,.gif,.jpeg"></InputFile>
+                                <ValidationMessage For="@(() => event2.Event__FilePath)" />
+                            </div>
+                        </div>
+                        }
+                        else if (eventno == 3)
+                        {
+                            <div class="form-group row mb-3">
+                                <div>
+                                    <div>Select your event file(s):</div>
+                                    <InputFile @key=@(inputFileId) OnChange="MultiFileSubmit" accept=".pdf"></InputFile>
+                                    <ValidationMessage For="@(() => event2.Event__FilePath)" />
+                                </div>
+                            </div>
+                        }
+
+                        <div class="form-group row mb-3">
+                            <div>
+                                <label for="EventFDesc">Event File Description:</label>
+                                <InputTextArea @bind-Value="event2.Event__FileDescription" style="width:80%; height:140px;" />
+                                <ValidationMessage For="@(() => event2.Event__FileDescription)" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-3">
+                            <div>
+                                <label for="EventFSeq">Sequence No:</label>
+                                <InputNumber @bind-Value="event2.Event__FileSequenceNo" class="form-control" />
+                                <ValidationMessage For="@(() => event2.Event__FileSequenceNo)" />
+                            </div>
+                        </div>
+
+                        @if (eventno == 2)
+                        {
+                            <div class="form-group row mb-3">
+                                <label class="col-md-2 col-form-label">Set as Thumbnail</label>
+                                <div class="col-md-10">
+                                    <Switch Class="mt-2" @bind-Value="event2.Event__Thumbnail" />
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </EditForm>
+            </BodyTemplate>
+            <FooterTemplate>
+                <Button Color="ButtonColor.Secondary" id="resetEventFile" @onclick="OnHideModalAddClick" >Cancel</Button>
+                <Button @ref="addButton" Color="ButtonColor.Primary" @onclick="@(()=>EventFileSubmit(event2.Event__ID))">Add</Button>
+            </FooterTemplate>
+        </Modal>
+
+    </div>
+</div>
+
+
+<!-- The View Event Modal -->
+<div id="viewEventModal" class="modal">
+
+    <!-- View Event content -->
+    <div class="modal-content">
+        <span id="closeViewEvent" class="close" @onclick="@(()=>ResetCloseEventModal(false))">&times;</span>
+        <div class="tab">
+            <button class="tablinks active">Event Details</button>
+        </div>
+
+        <div class="tabcontent" id="evContent" style="text-align:center">
+
+@*                 <div style="margin: 0px 0px 20px 0px">
+                    <div>
+                        img
+                    </div>
+                </div>    *@        
+
+            <div style="margin: 0px 0px 5px 0px">
+                <div>
+                    <label for="Page">Page:&emsp;</label>
+                    @pagename
+                </div>
+            </div>
+
+                <div style="margin: 0px 0px 20px 0px">
+                    <div>
+                    <label for="Class">Class:&emsp;</label>
+                        @classname
+                    </div>
+                </div>
+
+                <div style="margin: 0px 0px 5px 0px">
+                <label for="eventName">Event Title:&emsp;</label>
+                    @event2.Event__Title                   
+                </div>
+
+                <div style="margin: 0px 0px 5px 0px">
+                    <label for="eventDesc">Event Description:&emsp;</label>
+                    @event2.Event__Description
+                </div>
+
+            <div style="margin: 0px 0px 5px 0px">
+                <label for="eventSeq">Event Sequence No:&emsp;</label>
+                @event2.Event__SequenceNo
+            </div>
+
+                <div style="margin: 20px 0px 20px 0px">
+                <div>
+                    <label for="eventFile">Event File:&emsp;</label>
+                    @foreach (var e in events)
+                    {
+                        if (event2.Event__FolderPathName == e.Event__FolderPathName)
+                        {
+                            <p>Sequence No.@e.Event__FileSequenceNo  - @e.Event__FilePath</p>
+                        }
+                    }
+                </div>
+                </div>
+
+        </div>
+    </div>
+</div>
+
+    <script>
+
+        // Get the modal
+        var vmodal = document.getElementById("addEventModal");
+        var vemodal = document.getElementById("editEventModal");
+        var vvmodal = document.getElementById("viewEventModal");
+
+    function CloseEventModal() {
+            vmodal.style.display = "none";
+            vemodal.style.display = "none";
+            vvmodal.style.display = "none";
+            document.getElementById("AddEventContent").style.display = "none";
+        }
+
+        // When the user clicks the button, open the modal
+        function OpenEventAdd() {
+            vmodal.style.display = "block";
+            document.getElementById("AddEventContent").style.display = "block";
+            document.getElementById("AddEventTab").className += " active";
+        }
+
+        function OpenEventEdit() {
+            vemodal.style.display = "block";
+            document.getElementById("eeContent").style.display = "block";
+            document.getElementById("efeContent").style.display = "none";
+            document.getElementById("EditEventTab").className += " active";
+            document.getElementById("EditEventFileTab").className = "tablinks";
+        }
+
+    function OpenEventFileEdit() {
+        vemodal.style.display = "block";
+        document.getElementById("eeContent").style.display = "none";
+        document.getElementById("efeContent").style.display = "block";
+        document.getElementById("EditEventTab").className = "tablinks";
+        document.getElementById("EditEventFileTab").className += " active";
+    }
+
+        function OpenEventView() {
+            vvmodal.style.display = "block";
+            document.getElementById("evContent").style.display = "block";
+        }
+
+    function openTab(evt, tName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    function EnableEventDeleteBtn() {
+        btnV = document.getElementById("deleteEvent").disabled = false;
+    }
+
+    window.removeBackdropClass = function () {
+        let backdrop = document.querySelector('.modal-backdrop.fade.show');
+        if (backdrop) {
+            backdrop.classList = ('.modal');
+        }
+    };
+
+    function DisableEventDeleteBtn() {
+        btnV = document.getElementById("deleteEvent").disabled = true;
+    }
+
+
+    function ShowResetButton() {
+        document.getElementById("resetEventFile").disabled = false;
+    }
+
+    function DisableResetButton() {
+        document.getElementById("resetEventFile").disabled = true;
+    }
+    </script>
+
+
+
+
+@code {
+
+    [Parameter] public int admin { get; set; }
+    [Parameter] public int eventno { get; set; }
+
+    private int pName = 0;
+
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private void ShowMessage(ToastType toastType) => messages.Add(CreateToastMessage(toastType));
+
+    private ToastMessage CreateToastMessage(ToastType toastType)
+    => new ToastMessage
+        {
+            Type = toastType,
+            Title = "File Upload Error",
+            HelpText = $"{DateTime.Now}",
+            Message = $"Failed to upload event file. Please make sure the data required are filled.",
+        };
+
+    private Button saveButton, addButton, deleteButton;
+
+    Tabs tabs = default!;
+    private async Task ShowVideoTabAsync() => await tabs.ShowTabByNameAsync("Video");
+    private async Task ShowImageTabAsync() => await tabs.ShowTabByNameAsync("Image");
+    private async Task ShowDocumentTabAsync() => await tabs.ShowTabByNameAsync("Document");
+
+    private string path = "https://localhost:7219/";
+    private bool disabled = true;
+
+    public string? Username { get; set; }
+    public Employee employees { get; set; } = new Employee();
+    List<Location> locations = new List<Location>();
+
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employees = existingEmployee;
+
+            //Update log
+            existingEmployee.Employee__Log = DateTime.Now;
+            var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Employees/UpdateEmployeeByID/{existingEmployee.Employee__ID}", existingEmployee);
+
+            Console.WriteLine("Admin in Event Gallery");
+            admin = employees.Employee__ID;
+        }
+        else
+        {
+            // Navigate back to home page if user != admin
+            Console.WriteLine("No Access to Admin Only Page - Event Gallery");
+            Navigation.NavigateTo("/", true);
+        }
+    }
+
+    private Modal modal, modalAdd;
+
+    private async Task OnShowModalClick(int eid, int eno)
+    {
+        await EditFileItem(eid);
+        if (eno == 1)
+        {
+            eventno = 1;
+        }
+        else if (eno == 2)
+        {
+            eventno = 2;
+        }
+        else if (eno == 3)
+        {
+            eventno = 3;
+        }
+        await modal.ShowAsync();
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+    private async Task OnShowAddModalClick(string FolderPathName, int eno)
+    {
+        var selectedItem = events.First(c => c.Event__FolderPathName == FolderPathName);
+        var selectedClass = classes.First(c => c.Class__ID == selectedItem.Event_Class__ID);
+
+        Getpagename(selectedClass.Class_Page__ID);
+        Getclassname(selectedItem.Event_Class__ID);
+
+        //display the item's detailed information
+        event2.Event__SequenceNo = selectedItem.Event__SequenceNo;
+        // event2.Event__FolderPathName = selectedItem.Event__FolderPathName;
+        event2.Event__Title = selectedItem.Event__Title;
+        event2.Event__Description = selectedItem.Event__Description;
+        event2.Event_Class__ID = selectedItem.Event_Class__ID;
+
+        event2.Event__FilePath = null;
+        event2.Event__FileSequenceNo = 1;
+        event2.Event__FileType = "";
+        event2.Event__Thumbnail = false;
+        event2.Event__FileDescription = "";
+
+        if (eno == 1)
+        {
+            eventno = 1;
+        }
+        else if (eno == 2)
+        {
+            eventno = 2;
+        }
+        else if (eno == 3)
+        {
+            eventno = 3;
+        }
+        await modalAdd.ShowAsync();
+        await JSRuntime.InvokeVoidAsync("DisableResetButton");
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+    private async Task OnHideModalClick()
+    {
+        await modal.HideAsync();
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+    private async Task OnHideModalAddClick()
+    {
+        if (event2.Event__FilePath != null)
+        {
+            ResetInputFile();
+        }
+        await modalAdd.HideAsync();
+        await JSRuntime.InvokeVoidAsync("removeBackdropClass");
+    }
+
+
+    public Event event2 { get; set; } = new Event();
+    List<Event> events = new List<Event>();
+    List<Event> eventsonce = new List<Event>();
+    private HashSet<Event> selectedEvents = new();
+
+    List<Class> classes = new List<Class>();
+    List<Page> pages = new List<Page>();
+
+    private string ErrorMsg { get; set; } = String.Empty;
+    const long maxFileSize = 5000 * 1024 * 100; // 500MB
+    private string FileName { get; set; } = String.Empty;
+    private string FileType { get; set; } = String.Empty;
+
+    private string pagename = string.Empty;
+    private string classname = string.Empty;
+    private string eventname = string.Empty;
+
+    private Guid inputFileId = Guid.NewGuid();
+    // IBrowserFile browserFiles;
+
+    private ConfirmDialog dialog = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClass();
+        await LoadEvent();
+        await LoadPage();
+        await JSRuntime.InvokeVoidAsync("DisableEventDeleteBtn");
+    }
+
+    private void Getpagename(int PID)
+    {
+        pagename = string.Empty;
+
+        @foreach (var p in pages)
+        {
+            if (p.Page__ID == PID)
+            {
+                pagename = p.Page__FolderPathName;
+            }
+        }
+    }
+
+    private void Getclassname(int CID)
+    {
+         classname = string.Empty;
+
+        @foreach (var c in classes)
+        {
+            if (c.Class__ID == CID)
+            {
+                classname = c.Class__FolderPathName;
+            }
+        }
+    }
+
+    async Task LoadEvent()
+    {
+        var result = await Http.GetFromJsonAsync<List<Event>>("https://localhost:7219/api/Events/GetEvent");
+        if (result != null)
+        {
+            events = result;
+        }
+    }
+
+    // async Task LoadEventOnce()
+    // {
+    //     var result = await Http.GetFromJsonAsync<List<Event>>("https://localhost:7219/api/Events/GetEventOnce");
+    //     if (result != null)
+    //     {
+    //         eventsonce = result;
+    //     }
+    // }
+
+    async Task LoadClass()
+    {
+        var result = await Http.GetFromJsonAsync<List<Class>>("https://localhost:7219/api/Classes/GetClassByPage");
+        if (result != null)
+        {
+            classes = result;
+        }
+    }
+
+    async Task LoadPage()
+    {
+        var result = await Http.GetFromJsonAsync<List<Page>>("https://localhost:7219/api/Pages/GetPage");
+        if (result != null)
+        {
+            pages = result;
+        }
+    }
+
+    //Retrieve location data from database
+    async Task LoadLocation()
+    {
+        var result2 = await Http.GetFromJsonAsync<List<Location>>("https://localhost:7219/api/Locations");
+        if (result2 != null)
+        {
+            locations = result2;
+        }
+    }
+
+    async Task DeleteEvent(HashSet<Event> eventss)
+    {
+        foreach (var e in eventss)
+        {
+            await DeleteEventByID(e.Event__ID);
+        }
+
+        await LoadEvent();  
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Event", true);
+    }   
+
+    private async Task<BlazorBootstrap.GridDataProviderResult<Event>> EventsDataProvider(BlazorBootstrap.GridDataProviderRequest<Event> request)
+    { 
+        var result = await Http.GetFromJsonAsync<List<Event>>("https://localhost:7219/api/Events/GetEventOnce");
+        if (result != null)
+        {
+            var query = result.AsQueryable();
+            var eventsVar = query.OrderBy(i => i.Event_Class__ID).ToList();
+            eventsonce = eventsVar;
+        }
+
+        await LoadClass();
+        return await Task.FromResult(request.ApplyTo(eventsonce));
+    }
+
+    private Task OnSelectedItemsChanged(HashSet<Event> event2)
+    {
+        selectedEvents = events is not null && event2.Any() ? event2 : new();
+        if (selectedEvents.Count > 0)
+        {
+            JSRuntime.InvokeVoidAsync("EnableEventDeleteBtn");
+        }
+        else
+        {
+            JSRuntime.InvokeVoidAsync("DisableEventDeleteBtn");
+        }
+        return Task.CompletedTask;
+    }
+
+    public async Task MultiFileSubmit(InputFileChangeEventArgs e)
+    {        
+        var imgnum = events.Count(i => i.Event__FolderPathName == event2.Event__FolderPathName && i.Event__FileType == "Image");
+        var vidnum = events.Count(i => i.Event__FolderPathName == event2.Event__FolderPathName && i.Event__FileType == "Video");
+        var docnum = events.Count(i => i.Event__FolderPathName == event2.Event__FolderPathName && i.Event__FileType == "Document");
+        var browserFiles = e.GetMultipleFiles();
+
+        if (eventno == 0)
+        {
+            CreateEventFolder();
+        }       
+
+        foreach (var f in browserFiles)
+        {
+            if (f != null)
+            {
+                FileName = f.Name;
+
+                try
+                {
+                    var fileStream = f.OpenReadStream(maxFileSize);
+                    var shortenFile = $"Page/{pagename}/{classname}/{event2.Event__FolderPathName}/{f.Name}";
+                    var randomFile = Path.Combine("wwwroot","Page", pagename, classname, event2.Event__FolderPathName, f.Name);
+                    var extension = Path.GetExtension(f.Name);
+                    var shortenFilePath = Path.ChangeExtension(shortenFile, extension);
+                    var targetFilePath = Path.ChangeExtension(randomFile, extension);
+
+                    var targetStream = new FileStream(targetFilePath, FileMode.Create);
+                    await fileStream.CopyToAsync(targetStream);
+                    targetStream.Close();
+
+
+                    if (extension == ".png" || extension == ".jpg" || extension == ".jpg" || extension == ".gif")
+                    {
+                        FileType = "Image";
+                        event2.Event__FilePath = shortenFilePath;
+
+                            event2.Event__FileSequenceNo = imgnum + 1;
+                            imgnum += 1;
+                    }
+                    else if (extension == ".mp4")
+                    {
+                        FileType = "Video";
+                        event2.Event__FilePath = shortenFilePath;
+
+                        event2.Event__FileSequenceNo = vidnum + 1;
+                        vidnum += 1;
+                    }
+                    else if (extension == ".pdf")
+                    {
+                        FileType = "Document";
+                        event2.Event__FilePath = path + shortenFilePath;
+
+                        event2.Event__FileSequenceNo = docnum + 1;
+                        docnum += 1;
+                    }
+
+                    event2.Event__ID = 0;
+                    event2.Event__FileDescription = "Please enter the file description here";
+                    event2.Event__FileType = FileType;
+                    event2.Event__Thumbnail = false;                    
+
+                    if (eventno != 0)
+                    {
+                        await JSRuntime.InvokeVoidAsync("ShowResetButton");
+                    }
+
+                    var result = await Http.PostAsJsonAsync("https://localhost:7219/api/Events/AddEvents", event2);                   
+                    var selectedItem = events.Last();
+                    event2.Event__ID = (selectedItem.Event__ID) +1;
+                }
+                catch (Exception exception)
+                {
+                    ErrorMsg = exception.Message;
+                }
+            }
+        }
+    }    
+
+    async Task EventSubmit()
+    {
+
+        if (event2.Event__FilePath == null || event2.Event__FileDescription == "")
+        {
+            ResetInputFile();
+            ShowMessage(ToastType.Warning);
+        }
+        else
+        {
+            addButton?.ShowLoading("Adding New Event...");
+            await LoadEvent();
+            await Task.Delay(3000);
+            addButton?.HideLoading();
+            Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Event", true);
+        }
+    }
+
+    async Task EventFileSubmit(int id)
+    {
+
+        if (event2.Event__FilePath == null || event2.Event__FileDescription == "")
+        {
+            ResetInputFile();
+            ShowMessage(ToastType.Warning);
+        }
+        else
+        {
+            addButton?.ShowLoading("Adding New Event File...");
+
+            if (event2.Event__Thumbnail == true)
+            {
+                foreach(var e in events.SkipWhile(i=>i.Event__ID == event2.Event__ID))
+                {
+                    e.Event__Thumbnail = false;
+                    await Http.PutAsJsonAsync($"https://localhost:7219/api/Events/UpdateEventByID/{id}", e);
+                }
+            }
+
+            await Http.PutAsJsonAsync($"https://localhost:7219/api/Events/UpdateEventByID/{id}", event2);
+            await LoadEvent();
+
+            await Task.Delay(3000);
+            addButton?.HideLoading();
+
+            await InvokeAsync(() => { StateHasChanged(); });
+            await modalAdd.HideAsync();
+        }
+    }
+
+    private void ResetInputFile()
+    {
+        if(event2.Event__ID != 0)
+        {
+            var selectedClass = classes.First(c => c.Class__ID == event2.Event_Class__ID);
+
+            Getpagename(selectedClass.Class_Page__ID);
+            Getclassname(event2.Event_Class__ID);
+
+            var targetDeleteEventPath = "wwwroot/Page/" + pagename + "/" + classname + "/" + event2.Event__FolderPathName;
+            if (System.IO.Directory.Exists(targetDeleteEventPath))
+            {
+                System.IO.Directory.Delete(targetDeleteEventPath);
+            }
+            else
+            {
+                Console.WriteLine("Path not found");
+            }
+        }
+
+        inputFileId = Guid.NewGuid();
+        event2 = new();
+        FileName = string.Empty;
+        FileType = string.Empty;
+    }
+
+    private string previousPath = string.Empty;
+
+    private void DisplayData(int id)
+    {
+        var selectedItem = events.First(c => c.Event__ID == id);
+        var selectedClass = classes.First(c => c.Class__ID == selectedItem.Event_Class__ID);
+
+        Getpagename(selectedClass.Class_Page__ID);
+        Getclassname(selectedItem.Event_Class__ID);
+
+        //display the item's detailed information
+        event2.Event__SequenceNo = selectedItem.Event__SequenceNo;
+        event2.Event__FolderPathName = selectedItem.Event__FolderPathName;
+        event2.Event__Title = selectedItem.Event__Title;
+        event2.Event__Description = selectedItem.Event__Description;
+        event2.Event__ID = selectedItem.Event__ID;
+
+        event2.Event__FilePath = selectedItem.Event__FilePath;
+        previousPath = selectedItem.Event__FilePath;
+        event2.Event__FileSequenceNo = selectedItem.Event__FileSequenceNo;
+        event2.Event__FileDescription = selectedItem.Event__FileDescription;
+        event2.Event__FileType = selectedItem.Event__FileType;
+        event2.Event__Thumbnail = selectedItem.Event__Thumbnail;
+
+        event2.Event_Class__ID = selectedItem.Event_Class__ID;
+    }
+
+    async Task EditItem(int id)
+    {
+        DisplayData(id);
+
+        await LoadEvent();
+
+        await JSRuntime.InvokeVoidAsync("OpenEventEdit");
+    }
+
+    async Task EditFileItem(int id)
+    {
+        DisplayData(id);
+        await LoadEvent();
+    }
+
+    async Task EventEdit(int id , int eno)
+    {
+        saveButton?.ShowLoading("Saving details...");
+
+        event2.Event__FilePath = previousPath;
+
+        var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Events/UpdateEventByID/{id}", event2);
+        await LoadEvent();
+        eventno = eno;
+
+        await Task.Delay(3000);
+        saveButton?.HideLoading();
+
+        await InvokeAsync(() => { StateHasChanged(); });
+        await modal.HideAsync();      
+    }
+
+    async Task EventEditSubmit(int id, int eno)
+    {
+        saveButton?.ShowLoading("Saving details...");
+
+        event2.Event__FilePath = previousPath;
+
+        var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Events/UpdateEventByID/{id}", event2);
+        await LoadEvent();
+        eventno = eno;
+
+        await Task.Delay(1500);
+        saveButton?.HideLoading();
+
+        await InvokeAsync(() => { StateHasChanged(); });
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Event", true);
+    }
+
+    async Task ViewItem(int id)
+    {
+        DisplayData(id);
+
+        await LoadEvent();
+
+        await JSRuntime.InvokeVoidAsync("OpenEventView");
+    }
+
+    async Task DeleteEventByID(int id)
+    {
+        deleteButton?.ShowLoading("Deleting Event...");
+
+        var selectedItem = events.First(c => c.Event__ID == id);
+        var selectedClass = classes.First(c => c.Class__ID == selectedItem.Event_Class__ID);
+
+        Getclassname(selectedItem.Event_Class__ID);
+        Getpagename(selectedClass.Class_Page__ID);
+
+        var targetDeleteEventPath = "wwwroot/Page/" + pagename + "/" + classname + "/" + selectedItem.Event__FolderPathName;          
+
+        if (System.IO.Directory.Exists(targetDeleteEventPath))
+        {         
+            foreach (var e in events)
+            {
+                if (e.Event__FolderPathName == selectedItem.Event__FolderPathName)
+                {
+                    if (e.Event__FileType == "Video" || e.Event__FileType == "Image")
+                    {
+                        var targetDeleteEventFilePath = "wwwroot\\" +e.Event__FilePath;
+                        
+                        if (System.IO.Directory.Exists(targetDeleteEventFilePath))
+                        {
+                            System.IO.Directory.Delete(targetDeleteEventFilePath);
+                            await Http.DeleteAsync("https://localhost:7219/api/Events/" + e.Event__ID);
+                        }
+                        else if (!System.IO.Directory.Exists(targetDeleteEventFilePath))
+                        {
+                            await Http.DeleteAsync("https://localhost:7219/api/Events/" + e.Event__ID);
+                            Console.WriteLine($"Deleted event file but targeted directory path was not found - {targetDeleteEventFilePath}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Fail to delete event file - {targetDeleteEventFilePath}");
+                        }
+                    }
+                    else if (e.Event__FileType == "Document")
+                    {
+                        string url = e.Event__FilePath;
+                        string baseUrl = "https://localhost:7219/";
+
+                        var targetDeleteEventFilePath = url.Replace(baseUrl, "wwwroot\\");
+
+                        if (System.IO.File.Exists(targetDeleteEventFilePath))
+                        {
+                            System.IO.File.Delete(targetDeleteEventFilePath);
+                            await Http.DeleteAsync("https://localhost:7219/api/Events/" + e.Event__ID);
+                        }
+                        else if (!System.IO.File.Exists(targetDeleteEventFilePath))
+                        {
+                            await Http.DeleteAsync("https://localhost:7219/api/Events/" + e.Event__ID);
+                            Console.WriteLine($"Deleted event file but targeted directory was not found - {targetDeleteEventFilePath}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Fail to delete event file - {targetDeleteEventFilePath}");
+                        }
+                    }
+                }
+            }
+
+            System.IO.Directory.Delete(targetDeleteEventPath);
+        }
+        else if (!System.IO.Directory.Exists(targetDeleteEventPath))
+        {
+            foreach (var e in events)
+            {
+                if (e.Event__FolderPathName == selectedItem.Event__FolderPathName)
+                {
+                    await Http.DeleteAsync("https://localhost:7219/api/Events/" + e.Event__ID);
+                }
+            }
+
+            Console.WriteLine("Deleted event but targeted directory was not found");
+        }
+        else
+        {
+            Console.WriteLine("Fail to delete event");
+        }
+
+        await LoadEvent();
+        await Task.Delay(2000);
+        deleteButton?.HideLoading();
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Event", true);
+    }
+
+    private async Task ArrangeSequenceNo(int id)
+    {
+        var selectedItem = events.First(c => c.Event__ID == id);
+        Console.WriteLine($"done {selectedItem}");
+        if(selectedItem.Event__FileSequenceNo == 1)
+        {
+            foreach (var e in events.Where(i => i.Event__FolderPathName == selectedItem.Event__FolderPathName && i.Event__FileType == selectedItem.Event__FileType))
+            {
+                if(e.Event__ID != id)
+                {
+                    e.Event__SequenceNo = e.Event__SequenceNo;
+                    e.Event__FolderPathName = e.Event__FolderPathName;
+                    e.Event__Title = e.Event__Title;
+                    e.Event__Description = e.Event__Description;
+                    e.Event__FilePath = e.Event__FilePath;
+                    e.Event__FileDescription = e.Event__FileDescription;
+                    e.Event__FileType = e.Event__FileType;
+                    e.Event__Thumbnail = e.Event__Thumbnail;
+                    e.Event_Class__ID = e.Event_Class__ID;
+                    e.Event__FileSequenceNo = e.Event__FileSequenceNo - 1;
+
+                    await Http.PutAsJsonAsync($"https://localhost:7219/api/Events/UpdateEventByID/{e.Event__ID}", e);
+                    Console.WriteLine($"done {e.Event__FilePath}");
+                }
+            }
+        }
+        else if (selectedItem.Event__FileSequenceNo > 1 && selectedItem.Event__FileSequenceNo != events.Count(i => i.Event__FolderPathName == selectedItem.Event__FolderPathName && i.Event__FileType == selectedItem.Event__FileType))
+        {
+            foreach (var e in events.Where(i => i.Event__FolderPathName == selectedItem.Event__FolderPathName && i.Event__FileType == selectedItem.Event__FileType))
+            {
+                if (e.Event__ID != id && e.Event__FileSequenceNo > selectedItem.Event__FileSequenceNo)
+                {
+                    e.Event__SequenceNo = e.Event__SequenceNo;
+                    e.Event__FolderPathName = e.Event__FolderPathName;
+                    e.Event__Title = e.Event__Title;
+                    e.Event__Description = e.Event__Description;
+                    e.Event__FilePath = e.Event__FilePath;
+                    e.Event__FileDescription = e.Event__FileDescription;
+                    e.Event__FileType = e.Event__FileType;
+                    e.Event__Thumbnail = e.Event__Thumbnail;
+                    e.Event_Class__ID = e.Event_Class__ID;
+                    e.Event__FileSequenceNo -= 1;
+
+                    await Http.PutAsJsonAsync($"https://localhost:7219/api/Events/UpdateEventByID/{e.Event__ID}", e);
+                    Console.WriteLine($"done {e.Event__FilePath}");
+                }
+            }
+        }
+    }
+
+    private async Task ShowDeleteEventDialogAsync(int id)
+    {
+        var selectedEvent = events.First(c => c.Event__ID == id);
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Event",
+            message1: "Are you sure you want to delete this Event?",
+            message2: $"Selected Event: {selectedEvent.Event__Title}",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteEventByID(selectedEvent.Event__ID);
+        }
+    }
+
+    private async Task ShowMultipleDeleteEventDialogAsync(HashSet<Event> eventss)
+    {
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Multiple Events",
+            message1: $"Are you sure you want to delete these {selectedEvents.Count} selected Events?",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteEvent(selectedEvents);
+        }
+    }
+
+    private async void ResetCloseEventModal(bool reset)
+    {
+        if(reset == true)
+        {
+            ResetInputFile();
+        }
+        else
+        {
+            inputFileId = Guid.NewGuid();
+            event2 = new();
+            FileName = string.Empty;
+            FileType = string.Empty;
+        }
+        await JSRuntime.InvokeVoidAsync("CloseEventModal");
+    }
+
+    async Task DeleteEventFile(int id, int eno)
+    {
+        deleteButton?.ShowLoading("Deleling file...");
+
+        var selectedEventFile = events.First(c => c.Event__ID == id);
+        var selectedClass = classes.First(c => c.Class__ID == selectedEventFile.Event_Class__ID);
+
+        Getclassname(selectedEventFile.Event_Class__ID);
+        Getpagename(selectedClass.Class_Page__ID);
+        
+        
+        if (eno == 1 || eno == 2)
+        {
+            var targetDeleteEventPath = "wwwroot\\" + selectedEventFile.Event__FilePath;
+            
+            if (System.IO.File.Exists(targetDeleteEventPath))
+            {
+                await ArrangeSequenceNo(id);
+                System.IO.File.Delete(targetDeleteEventPath);
+                await Http.DeleteAsync("https://localhost:7219/api/Events/" + selectedEventFile.Event__ID);
+            }
+            else if (!System.IO.File.Exists($"{targetDeleteEventPath}"))
+            {
+                await ArrangeSequenceNo(id);
+                await Http.DeleteAsync("https://localhost:7219/api/Events/" + selectedEventFile.Event__ID);
+                Console.WriteLine($"Deleted event file but targeted directory 2 was not found - {targetDeleteEventPath}");
+
+            }
+            else
+            {
+                Console.WriteLine($"Fail to delete event file - {targetDeleteEventPath}");
+            }
+        }
+        else if (eno == 3)
+        {
+            string url = selectedEventFile.Event__FilePath;
+            string baseUrl = "https://localhost:7219/";
+
+            var targetDeleteEventPath = url.Replace(baseUrl, "wwwroot\\");
+
+            if (System.IO.File.Exists(targetDeleteEventPath))
+            {
+                await ArrangeSequenceNo(id);
+                System.IO.File.Delete(targetDeleteEventPath);
+                await Http.DeleteAsync("https://localhost:7219/api/Events/" + selectedEventFile.Event__ID);
+            }
+            else if (!System.IO.File.Exists(targetDeleteEventPath))
+            {
+                await Http.DeleteAsync("https://localhost:7219/api/Events/" + selectedEventFile.Event__ID);
+                Console.WriteLine($"Deleted event file but targeted directory was not found - {targetDeleteEventPath}");
+            }
+            else
+            {
+                Console.WriteLine($"Fail to delete event file - {targetDeleteEventPath}");
+            }
+        }
+
+        await LoadEvent();
+        await Task.Delay(2000);
+        deleteButton?.HideLoading();
+
+        await InvokeAsync(() => { StateHasChanged(); });
+        await modal.HideAsync();
+    }
+
+    private async Task ShowDeleteEventFileDialogAsync(int id, int eno)
+    {
+        var selectedEventFile = events.First(c => c.Event__ID == id);
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Event File",
+            message1: $"Are you sure you want to delete this {selectedEventFile.Event__FileType} file?",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteEventFile(selectedEventFile.Event__ID, eno);
+        }
+    }
+
+    async Task OpenAddEventModal()
+    {
+        await JSRuntime.InvokeVoidAsync("OpenEventAdd");
+    }
+
+    private void CreateEventFolder()
+    {
+        event2.Event__FolderPathName = "Event_" + event2.Event__Title;
+        var selectedClass = classes.First(c => c.Class__ID == event2.Event_Class__ID);
+
+        Getpagename(selectedClass.Class_Page__ID);
+        Getclassname(event2.Event_Class__ID);
+
+        if (pagename != "" && classname != "")
+        {
+            string path = "wwwroot\\Page\\" + pagename + "\\" + classname + "\\" + event2.Event__FolderPathName;
+
+            // Combine the base path with the new folder path
+            string fullPath = Path.Combine(Environment.CurrentDirectory, path);
+
+            // Check if the folder doesn't exist and then create it
+            if (!Directory.Exists(fullPath))
+            {
+                DirectoryInfo di = Directory.CreateDirectory(fullPath);
+            }
+            else
+            {
+                Console.WriteLine($"This path: {path} already exists.");
+            }
+        }
+    }
+}
+

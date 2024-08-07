@@ -1,0 +1,127 @@
+﻿@page "/VisitorPage/Form"
+@using static System.Net.WebRequestMethods
+@using System.Text.RegularExpressions;
+@inject HttpClient Http
+
+@rendermode @(new InteractiveServerRenderMode(prerender:false)) 
+
+@inject NavigationManager Navigation
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NCL Visitor Form</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <section class="container" style="padding: 5rem;">
+    <div class="image__container">
+            <img src="/Asset/NamCheongLogo_vertical.png" alt="img" style="width: 350px;height:350px" />
+    </div>
+
+    <div class="content__container">
+        <h1> Welcome to <br>Nam Cheong </h1>
+        <p>
+            We are glad to have you visiting us. Please fill in the form below to register your visit.
+        </p>
+
+            <EditForm Model="NCLGuest" OnSubmit="SubmitNewGuest">
+            <DataAnnotationsValidator />
+            <div>
+                    <div style="margin: 20px 0px 20px 0px; display: flex">
+                        <div>
+                            <label for="VisitorName">Visitor Name:</label>
+                            <InputText id="VisitorName" @bind-Value="NCLGuest.Visitor__Name" class="form-control" />
+                            <ValidationMessage For="@(() => NCLGuest.Visitor__Name)" />
+                        </div>
+                    </div>
+
+                    <div style="margin: 20px 0px 20px 0px; display: flex">
+                        <div>
+                            <label for="VisitorContact">Visitor Contact:</label>
+                            <InputText id="VisitorContact" @bind-Value="validcontact" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div style="margin: 20px 0px 50px 0px; display: flex">
+                        <div>
+                            <label for="VisitorActivityLocation">Visiting Location:</label>
+                            <InputSelect id="VisitorAcitvityLocation" @bind-Value="visitorActivity.LocationLocation__ID" class="form-control">
+                                <option value="">Please select a location</option>
+                                @foreach (var location in Location)
+                                {
+                                    <option value="@location.Location__ID">@location.Location__Name</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px; width:contain;">
+                        <button class="nav__btn" style="border-radius: 5px; padding: 1rem 4rem; " type="submit">Visit</button>
+                    </div>
+            </div>                        
+        </EditForm>
+    </div>
+</section>
+</body>
+</html>
+
+
+@code {
+
+    [Parameter] public int? VID { get; set; }
+
+    public Visitor NCLGuest { get; set; } = new Visitor();
+
+    public VisitorActivity visitorActivity { get; set; } = new VisitorActivity();
+
+    public List<Location> Location {get;set;} = new List<Location>();
+
+    private string validcontact = string.Empty;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await getLocation();
+    }
+
+
+    async Task getLocation()
+    {
+        await Task.Delay(500);
+        var result = await Http.GetFromJsonAsync<List<Location>>("https://localhost:7219/api/Locations");
+        if (result != null)
+        {
+            Location = result;
+        }
+    }
+
+    public static string RemoveSpecialCharacters(string input)
+    {
+        string pattern = @"[^a-zA-Z0-9]";
+
+        string cleanedPhrase = Regex.Replace(input, pattern, string.Empty);
+
+        return cleanedPhrase;
+    }
+
+    async Task SubmitNewGuest()
+    {
+        NCLGuest.Visitor__Contact = RemoveSpecialCharacters(validcontact);
+        
+        var result = await Http.PostAsJsonAsync("https://localhost:7219/api/Visitors/AddVisitors", NCLGuest);
+        NCLGuest = await result.Content.ReadFromJsonAsync<Visitor>();
+        var result2 = await Http.PostAsJsonAsync("https://localhost:7219/api/Visitors/AddvisitorActivities", visitorActivity);
+
+        await InvokeAsync(StateHasChanged);
+        VID = visitorActivity.LocationLocation__ID;
+        Navigation.NavigateTo("/VisitorPage/Video/" + VID, true);
+    }
+
+}

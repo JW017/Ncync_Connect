@@ -1,0 +1,131 @@
+﻿@page "/VisitorPage/Video/{VID:int}"
+
+@using System.Security.Claims
+@using static System.Net.WebRequestMethods
+@using NCL.Shared.Entities;
+
+@inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Home Page</title>
+    <!-- Custom CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&display=swap" rel="stylesheet" />
+    <link href="_content/Blazor.Bootstrap/blazor.bootstrap.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/style-light.css">
+
+</head>
+<body>
+    <header class="hide-b sticky">
+        <nav>
+            <img src="/Asset/NamCheongLogo.png" alt="Logo" class="logo-a">
+            <ul>
+                <li>
+                    <a href="VisitorPage/Video/2/#sec-01">Video</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+
+    <main>
+        <div class="rectangle-green"></div>
+        <img src="/Asset/VisitorAsset/HomePage/ssv-line.png" class="parallax-b ssv">
+        <div class="text-b parallax-b">
+            <h2>Nam Cheong</h2>
+            <h1>Delivering Possibilities</h1>
+        </div>
+    </main>
+
+    <div class="sections">
+    <section id="sec-01">
+        <div class="rectangle-lightgreen"></div>
+        <img src="/Asset/VisitorAsset/HomePage/psv-line.png" class="psv">
+        <div class="container-01">
+            <div class="main-title-01">
+                <h1 style="text-align:center;">Video</h1>
+                <p style="text-align:center;">Gallery</p>
+                <hr style="width: 100%; color: #00a1b1;">
+            </div>
+            <br/>
+                @foreach (var vid in videos)
+                {
+                    if (videos.Count != 0 && vid.LocationLocation__ID == VID)
+                    {
+                        <div class="content-01">
+                            <div class="video-01">
+                                <video controls>
+                                    <source src="/Video/@vid.Video__Path" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                            <div class="side-text-01">@vid.Video__Name</div>
+                        </div>
+                        <div class="bottom-text-01">@vid.Video__Name</div>
+                    }
+                }
+        </div>
+    </section>
+    </div>
+
+    <div class="footer">
+        <div class="footer-container-01">
+            <h1 class="footer-title-01">QUALITY . RELIABILITY . DELIVERY</h1>
+            <div class="footer-content-01">
+                <p class="footer-line-01">© Copyright 2024. <br>All Rights Reserved by Nam Cheong Dockyard Sdn Bhd <br>Registration Number: 0008278X / 196801000681</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="js/animation.js"></script>
+
+</body>
+</html>
+
+
+
+@code {
+
+    [Parameter] public int? VID { get; set; }
+
+    public Video vid { get; set; } = new Video();
+    List<Video> videos = new List<Video>();
+    public Location Locations { get; set; } = new Location();
+
+
+    protected override async Task OnInitializedAsync()
+    {      
+        // Fetch the video type from the SQL database
+        var result = await Http.GetFromJsonAsync<List<Video>>("https://localhost:7219/api/videos");
+        if (result != null && result.Count > 0)
+        {
+            videos = result;
+        }
+    }
+
+
+    public void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("/MicrosoftIdentity/Account/SignOut", "/");
+    }
+
+    public void NavigateToVisitorGallery()
+    {
+        Navigation.NavigateTo("/VisitorPage/Gallery/"+VID);
+    }
+
+}
+
+

@@ -1,0 +1,725 @@
+﻿@using static System.Net.WebRequestMethods
+@using Microsoft.AspNetCore.Authorization
+@using static NCL.Client.Pages.Admin.PageGallery
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+@using BlazorBootstrap
+@using NCL.Shared.Entities
+@using System.Text
+@using System.IO
+
+<style>
+    /* Style the tab */
+    .tab3 {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+        /* Style the buttons inside the tab */
+        .tab3 button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+            /* Change background color of buttons on hover */
+            .tab3 button:hover {
+                background-color: #ddd;
+            }
+
+            /* Create an active/current tablink class */
+            .tab3 button.active {
+                background-color: #ccc;
+            }
+
+    /* Style the tab content */
+    .tabcontent3 {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+</style>
+
+@if (classes == null)
+{
+<p><em>Loading...</em></p>
+}
+else
+{
+<div class="button-container">
+    <div class="button-box">
+        <h2> Class Gallery </h2>
+        <Tooltip Class="d-inline-block" Title="Add New Class">
+            <button class="btn btn-primary" id="addClassBtn" @onclick="OpenAddClassModal">Add</button>
+        </Tooltip>
+        <Tooltip Class="d-inline-block" Title="Delete Multiple Classes">
+            <button class="btn btn-primary" @onclick="@(()=>ShowMultipleDeleteClassDialogAsync(@selectedClasses))" id="deleteC">Delete</button>
+        </Tooltip>
+    </div>
+</div>
+
+<br />
+
+<ConfirmDialog @ref="dialog" />
+
+<Grid TItem="Class"
+Class="table table-hover table-bordered table-striped"
+DataProvider="ClassesDataProvider"
+AllowFiltering="true"
+AllowPaging="true"
+PageSize="5"
+PageSizeSelectorVisible="true"
+PageSizeSelectorItems="@(new int[] { 5,10,20 })"
+AllowSorting="true"
+AllowSelection="true"
+SelectionMode="GridSelectionMode.Multiple"
+SelectedItemsChanged="OnSelectedItemsChanged"
+HeaderRowCssClass="bg-secondary text-white bg-opacity-55 border-bottom-0"
+Responsive="true">
+
+<GridColumn TItem="Class" HeaderText="Class Name" PropertyName="Class__Name" SortKeySelector="item => item.Class__Name">
+@context.Class__Name
+</GridColumn>
+
+<GridColumn TItem="Class" HeaderText="Page" PropertyName="Class_Page__ID" SortKeySelector="item => item.Class_Page__ID">
+@foreach (var p in pages)
+{
+if (p.Page__ID == context.Class_Page__ID)
+{
+@p.Page__Name @p.Page__SecondName
+}
+}                        
+</GridColumn>
+
+<GridColumn TItem="Class" HeaderText="Action" Sortable="false" Filterable="false">
+<Tooltip Class="d-inline-block" Title="View Class">
+    <button class="btn btn-primary" id="ClassViewBtn" @onclick="()=>ViewClass(context.Class__ID)"><Icon Name="IconName.CardList" /></button> 
+</Tooltip>
+<Tooltip Class="d-inline-block" Title="Edit Class" >
+    <button class="btn btn-primary" id="ClassEditBtn" @onclick="()=>EditClass(context.Class__ID)"><Icon Name="IconName.PencilSquare" /></button> 
+</Tooltip>
+<Tooltip Class="d-inline-block" Title="Delete Class">
+    <button class="btn btn-primary" @onclick="()=>ShowDeleteClassDialogAsync(context.Class__ID)"><Icon Name="IconName.Trash" /></button>
+</Tooltip>
+</GridColumn>
+
+</Grid>
+                    
+
+<div class="mt-3">
+Selected Items Count: @selectedClasses.Count
+</div>
+    @if (selectedClasses.Count > 0)
+    {
+<div class="mt-2">
+Selected Videos:
+<ul>
+
+@foreach (var c in selectedClasses)
+{
+<li>No. @c.Class__SequenceNo &emsp; @c.Class__Name</li>
+}
+</ul>
+</div>
+}
+
+}
+
+<!-- The Add Class Modal -->
+<div id="classModal" class="modal">
+
+    <!-- Add Class content -->
+    <div class="modal-content">
+        <span class="close" @onclick="ResetCloseClassModal">&times;</span>
+
+        <div class="tab3">
+            <button id="AddClassTab" class="tablinks3" onclick="openTab3(event, 'AddClassContent')">Create New Class</button>
+        </div>
+
+        <div id="AddClassContent" class="tabcontent3" style="display:block;">
+
+            <EditForm Model="class2">
+                <DataAnnotationsValidator />
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="pageName">Page Name:</label>
+                        <InputSelect id="pageName" @bind-Value="class2.Class_Page__ID" class="form-control">
+                            <option value="0">Please select a page</option>
+                            @foreach (var p in pages)
+                            {
+                                <option value="@p.Page__ID">@p.Page__Name @p.Page__SecondName</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                <div>
+                    <label for="className">Class Name:</label>
+                    <InputText id="className" @bind-Value="class2.Class__Name" class="form-control" />
+                    <ValidationMessage For="@(() => class2.Class__Name)" />
+                </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="classSeq">Class Sequence Number:</label>
+                        <InputNumber id="classSeq" @bind-Value="class2.Class__SequenceNo" class="form-control" />
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-secondary" @onclick="ResetInputFile">Reset</button> 
+                <button type="submit" class="btn btn-primary" @onclick="ClassSubmit">Create</button>
+
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(ErrorMsg))
+            {
+                <div>Error: @ErrorMsg</div>
+            }
+
+        </div>
+      
+    </div>
+</div>
+
+<!-- The Edit Class Modal -->
+<div id="classEditModal" class="modal">
+
+    <!-- Edit Class content -->
+    <div class="modal-content">
+        <span class="close" @onclick="ResetCloseClassModal">&times;</span>
+
+        <div class="tab3">
+            <button class="tablinks3 active">Edit Class</button>
+        </div>
+
+        <div id="EditClassContent" class="tabcontent3" style="display:block;">
+
+            <EditForm Model="class2">
+                <DataAnnotationsValidator />
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        @foreach (var p in pages)
+                        {
+                            if (p.Page__ID == class2.Class_Page__ID)
+                            {
+                                pagename = p.Page__Name;
+                            }
+                        }
+                        <label for="pageName">Page Name: &emsp;@pagename</label>                       
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="className">Class Name:</label>
+                        <InputText id="className" @bind-Value="class2.Class__Name" class="form-control" />
+                        <ValidationMessage For="@(() => class2.Class__Name)" />
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0px 20px 0px;display: flex">
+                    <div>
+                        <label for="pageSeq">Page Sequence Number:</label>
+                        <InputNumber id="pageSeq" @bind-Value="class2.Class__SequenceNo" class="form-control" />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" @onclick="@(()=>SubmitClassEdit(class2.Class__ID))">Save</button>
+
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(ErrorMsg))
+            {
+                <div>Error: @ErrorMsg</div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<!-- The View Class Modal -->
+<div id="classViewModal" class="modal">
+
+    <!-- View Class content -->
+    <div class="modal-content">
+        <span class="close" @onclick="ResetCloseClassModal">&times;</span>
+        <div class="tab3">
+            <button class="tablinks3 active">Class Details</button>
+        </div>
+
+        <div class="tabcontent3" id="ViewClassContent" style="text-align:center">
+
+            <div style="margin: 0px 0px 5px 0px">
+                <label for="pageName">Page:&emsp;</label>
+                @foreach(var p in pages)
+                {
+                    if(p.Page__ID == class2.Class_Page__ID)
+                    {
+                        @p.Page__Name @p.Page__SecondName;
+                    }
+                }
+            </div>
+
+            <div style="margin: 0px 0px 5px 0px">
+                <label for="Class">Class Name:&emsp;</label>
+                @class2.Class__Name
+            </div>
+
+            <div style="margin: 0px 0px 5px 0px">
+                <div>
+                    <label for="ClassSeq">Class Sequence No:&emsp;</label>
+                    @class2.Class__SequenceNo
+                </div>
+            </div>
+
+            @if (events.Count(i => i.Event_Class__ID == class2.Class__ID) > 0 )
+            {
+            <div style="margin: 20px 0px 20px 0px; display:inline-flex;">
+                <div>
+                    <label for="Event">Event Created:&emsp;</label>
+                    @foreach (var e in events.Where(i => i.Event_Class__ID == class2.Class__ID))
+                    {
+                        <div class="classDisplay">
+                            @e.Event__Title
+                        </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Class JavaScript -->
+<script>
+    // Get the modal
+    var cmodal = document.getElementById("classModal");
+    var cemodal = document.getElementById("classEditModal");
+    var cvmodal = document.getElementById("classViewModal");
+
+    // When the user clicks the button, open the modal
+    function OpenClassAdd() {
+        cmodal.style.display = "block";
+        document.getElementById("AddClassContent").style.display = "block";
+        document.getElementById("AddClassTab").className += " active";
+    }
+
+    function OpenClassEdit() {
+        cemodal.style.display = "block";
+        document.getElementById("EditClassContent").style.display = "block";
+    }
+
+    function OpenClassView() {
+        cvmodal.style.display = "block";
+        document.getElementById("ViewClassContent").style.display = "block";
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    function CloseClassModal() {
+       cmodal.style.display = "none";
+       cemodal.style.display = "none";
+       cvmodal.style.display = "none";
+       document.getElementById("AddClassContent").style.display = "none";
+    }
+
+    function openTab3(evt3, tName3) {
+        var j, tabcontent3, tablinks3;
+        tabcontent3 = document.getElementsByClassName("tabcontent3");
+        for (j = 0; j < tabcontent3.length; j++) {
+            tabcontent3[j].style.display = "none";
+        }
+        tablinks3 = document.getElementsByClassName("tablinks3");
+        for (j = 0; j < tablinks3.length; j++) {
+            tablinks3[j].className = tablinks3[j].className.replace(" active", "");
+        }
+        document.getElementById(tName3).style.display = "block";
+        evt3.currentTarget.className += " active";
+    }
+
+    function EnableClassDeleteBtn() {
+        btn = document.getElementById("deleteC").disabled = false;
+    }
+
+    function DisableClassDeleteBtn() {
+        btn = document.getElementById("deleteC").disabled = true;
+    }
+    </script>
+
+
+
+@code {
+
+    [Parameter] public int admin { get; set; }
+    [Parameter] public int? ID { get; set; }
+
+    public string? Username { get; set; }
+    public Employee employees { get; set; } = new Employee();
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employees = existingEmployee;
+            Console.WriteLine("Admin in Class Gallery");
+            admin = employees.Employee__ID;
+        }
+        else
+        {
+            // Navigate back to home page if user != admin
+            Console.WriteLine("No Access to Admin Only Page - Class Gallery");
+            Navigation.NavigateTo("/", true);
+        }
+    }
+
+    public Class class2 { get; set; } = new Class();
+    List<Class> classes = new List<Class>();
+    private HashSet<Class> selectedClasses = new();
+
+    List<Page> pages = new List<Page>();
+    List<Event> events = new List<Event>();
+
+    private string ErrorMsg { get; set; } = String.Empty;
+
+    private Guid inputFileId = Guid.NewGuid();
+
+    private ConfirmDialog dialog = default!;
+
+    private string CreatePath = string.Empty;
+    private string pagename = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClass();
+        await LoadPage();
+        await JSRuntime.InvokeVoidAsync("DisableClassDeleteBtn");
+    }
+
+    async Task DeleteClass(HashSet<Class> classs)
+    {
+        foreach (var c in classs)
+        {
+            await DeleteClassByID(c.Class__ID);
+
+            // Getpagename(c.Class_Page__ID);
+
+            // var targetFilePath = "wwwroot/Page/" + pagename + "/" + c.Class__Name;
+            // if (System.IO.File.Exists(targetFilePath))
+            // {
+            //     System.IO.File.Delete(targetFilePath);
+            // }
+
+            // await Http.DeleteAsync("https://localhost:7219/api/Pages/" + c.Class__Name);
+        }
+
+        await LoadClass();       
+
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Class", true);
+    }
+
+    async Task LoadClass()
+    {
+        var result = await Http.GetFromJsonAsync<List<Class>>("https://localhost:7219/api/Classes/GetClass");
+        if (result != null)
+        {
+            classes = result;
+        }
+    } 
+
+    async Task LoadPage()
+    {
+        var result = await Http.GetFromJsonAsync<List<Page>>("https://localhost:7219/api/Pages/GetPage");
+        if (result != null)
+        {
+            pages = result;
+        }
+    }
+
+    async Task LoadEvent()
+    {
+        var result = await Http.GetFromJsonAsync<List<Event>>("https://localhost:7219/api/Events/GetEvent");
+        if (result != null)
+        {
+            events = result;
+        }
+    }
+
+    private async Task<BlazorBootstrap.GridDataProviderResult<Class>> ClassesDataProvider(BlazorBootstrap.GridDataProviderRequest<Class> request)
+    {
+        var result = await Http.GetFromJsonAsync<List<Class>>("https://localhost:7219/api/Classes/GetClassByPage");
+        if (result != null)
+        {
+            classes = result;
+        }
+
+        return await Task.FromResult(request.ApplyTo(classes));
+    }
+
+    private Task OnSelectedItemsChanged(HashSet<Class> class2)
+    {
+        selectedClasses = classes is not null && class2.Any() ? class2 : new();
+        if (selectedClasses.Count > 0)
+        {
+            JSRuntime.InvokeVoidAsync("EnableClassDeleteBtn");
+        }
+        else
+        {
+            JSRuntime.InvokeVoidAsync("DisableClassDeleteBtn");
+        }
+        return Task.CompletedTask;
+    }
+
+    private void ResetInputFile()
+    {
+        foreach (var p in pages)
+        {
+            if (class2.Class_Page__ID == p.Page__ID)
+            {
+                pagename = p.Page__Name;
+            }
+        }
+
+        var targetDeleteClassPath = "wwwroot/Page/" + pagename + "/" + class2.Class__Name;
+        if (System.IO.File.Exists(targetDeleteClassPath))
+        {
+            System.IO.File.Delete(targetDeleteClassPath);
+        }
+
+        // Change id so that blazor re-renders InputFile as new component
+        inputFileId = Guid.NewGuid();
+        class2 = new();
+        pagename = string.Empty;
+    }
+
+    private async void ResetCloseClassModal()
+    {
+        ResetInputFile();
+        await JSRuntime.InvokeVoidAsync("CloseClassModal");
+    }
+
+    //Create a new Class
+    async Task ClassSubmit()
+    {
+        try
+        {
+            CreateClassFolder();
+
+            // Post the page name to the server using PostAsJsonAsync
+            var result = await Http.PostAsJsonAsync("https://localhost:7219/api/Classes/AddClasses", class2);
+
+            // Ensure the request was successful
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Added New Class");
+                await LoadClass();
+                Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Class", true);
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            // Handle any exceptions or errors that occur during the request BY logging the exception or show an error message to the user
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    async Task OpenAddClassModal()
+    {
+        await JSRuntime.InvokeVoidAsync("OpenClassAdd");
+    }
+
+    private string classname = string.Empty;
+
+    async Task EditClass(int id)
+    {
+        var selectedClass = classes.First(c => c.Class__ID == id);
+
+        //display the item's detailed information
+        class2.Class__ID = selectedClass.Class__ID;
+        class2.Class__Name = selectedClass.Class__Name;
+        // classname = selectedClass.Class__Name;
+        class2.Class__SequenceNo = selectedClass.Class__SequenceNo;
+        class2.Class_Page__ID = selectedClass.Class_Page__ID;
+        class2.Class__FolderPathName = selectedClass.Class__FolderPathName;
+
+        await LoadClass();
+
+        await JSRuntime.InvokeVoidAsync("OpenClassEdit");
+    }
+
+    async Task SubmitClassEdit(int id)
+    {
+        var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Classes/UpdateClassByID/{id}", class2);
+
+        await LoadClass();
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Class", true);
+    }
+
+    async Task ViewClass(int id)
+    {
+        var selectedClass = classes.First(c => c.Class__ID == id);
+
+        //display the item's detailed information
+        class2.Class__Name = selectedClass.Class__Name;
+        class2.Class__SequenceNo = selectedClass.Class__SequenceNo;
+        class2.Class_Page__ID = selectedClass.Class_Page__ID;
+        await LoadClass();
+
+        await JSRuntime.InvokeVoidAsync("OpenClassView");
+    }
+
+    async Task DeleteClassByID(int id)
+    {
+        var selectedClass = classes.First(c => c.Class__ID == id);
+
+        Getpagename(selectedClass.Class_Page__ID);
+        var targetDeleteClassPath = "wwwroot/Page/" + pagename + "/" + selectedClass.Class__Name;
+
+        if (System.IO.Directory.Exists(targetDeleteClassPath))
+        {
+            System.IO.Directory.Delete(targetDeleteClassPath);
+
+            await Http.DeleteAsync("https://localhost:7219/api/Classes/" + selectedClass.Class__ID);
+
+            foreach (var e in events)
+            {
+                if (e.Event_Class__ID == selectedClass.Class__ID)
+                {
+                    await Http.DeleteAsync("https://localhost:7219/api/Classes/" + e.Event__ID);
+                }
+            }
+        }
+        else if(!System.IO.Directory.Exists(targetDeleteClassPath))
+        {
+            await Http.DeleteAsync("https://localhost:7219/api/Classes/" + selectedClass.Class__ID);
+
+            foreach (var e in events)
+            {
+                if (e.Event_Class__ID == selectedClass.Class__ID)
+                {
+                    await Http.DeleteAsync("https://localhost:7219/api/Events/DeleteEventByID/" + e.Event__ID);
+                }
+            }
+
+            Console.WriteLine("Deleted class but targeted directory was not found");
+        }
+        else
+        {
+            Console.WriteLine("Fail to delete class");            
+        }
+
+        await LoadClass();
+        Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Class", true);
+    }
+
+    private async Task ShowDeleteClassDialogAsync(int id)
+    {
+        var selectedImage = classes.First(c => c.Class__ID == id);
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Class",
+            message1: "Are you sure you want to delete this class?",
+            message2: $"Selected class: {selectedImage.Class__Name}",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteClassByID(selectedImage.Class__ID);
+        }
+    }
+
+    private async Task ShowMultipleDeleteClassDialogAsync(HashSet<Class> classs)
+    {
+
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(
+            title: "Delete Multiple Classes",
+            message1: $"Are you sure you want to delete these {selectedClasses.Count} selected classes?",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await DeleteClass(selectedClasses);
+        }
+    }
+
+    // async Task DeleteImageTag(int id)
+    // {
+    //     var selectedImageTag = imagetags.First(c => c.ImageTag__ID == id);
+    //     await Http.DeleteAsync("https://localhost:7219/api/Images/" + selectedImageTag.ImageTag__ID);
+    //     await LoadImageGallery();
+    //     Navigation.NavigateTo("https://localhost:7219/AdministratorPage/" + admin + "/Image", true);
+    // }
+
+    // private async Task ShowDeleteImageTagDialogAsync(int id)
+    // {
+    //     var selectedImageTag = imagetags.First(c => c.ImageTag__ID == id);
+
+    //     var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+    //     var confirmation = await dialog.ShowAsync(
+    //         title: "Delete Image Tag",
+    //         message1: "Are you sure you want to delete this image tag?",
+    //         message2: $"Selected image tag: {selectedImageTag.ImageTag__Name}",
+    //         confirmDialogOptions: options);
+
+    //     if (confirmation)
+    //     {
+    //         await DeleteImageTag(selectedImageTag.ImageTag__ID);
+    //     }
+    // }
+
+    private void Getpagename(int PID)
+    {
+        @foreach (var p in pages)
+        {
+            if (p.Page__ID == PID)
+            {
+                pagename = p.Page__FolderPathName;
+            }
+        }
+    }
+
+    private void CreateClassFolder()
+    {
+        class2.Class__FolderPathName = "Class_" + class2.Class__Name;
+        Getpagename(class2.Class_Page__ID);
+        string path = "wwwroot\\Page\\" + pagename + "\\" + class2.Class__FolderPathName;
+
+        // Combine the base path with the new folder path
+        string fullPath = Path.Combine(Environment.CurrentDirectory, path);
+
+        // Check if the folder doesn't exist and then create it
+        if (!Directory.Exists(fullPath))
+        {
+            DirectoryInfo di = Directory.CreateDirectory(fullPath);
+        }
+        else
+        {
+            Console.WriteLine($"This path: {path} already exists.");
+        }
+    }
+}
+
