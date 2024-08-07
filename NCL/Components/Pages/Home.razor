@@ -1,0 +1,166 @@
+﻿@page "/"
+
+@attribute [Authorize]
+
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject AuthenticationStateProvider IdentityValidationProvider
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using NCL.Shared.Entities
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NCL Home</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+<link rel="stylesheet" href="css/style-home.css" />
+
+    </head>
+    <body>
+
+    <video autoplay muted loop id="myVideo">
+        <source src="/Asset/ocean background video.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
+
+        <div class="home__nav">
+            <nav>
+                <div class="nav__logo"><img src="/Asset/NamCheongLogo.png" alt="NCL Logo"></div>
+                <ul class="nav__links">
+                    <li class="link">
+                        <div class="dropdown">
+                            <button class="nav__btn">
+                                Login
+                            </button>
+                            <div class="dropdown-content">
+                            <a href="" onclick="NavigateToEmployee()" style="text-align: left;">As Employee</a>
+                            <a href="" onclick="NavigateToAdmin()" style="text-align: left;">As Administrator</a>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    <div class="slogan">
+        <p>
+            <b>Drive Possibilities</b>
+        </p>
+        <p class="text" id="date" style="font-size:38px"></p>
+        <p class="text" id="time" style="font-size:24px"></p>
+    </div>
+
+        <div class="vid__container">
+            <div class="vid__container2">
+            <div class="vid__content"></div>
+            <img class="circle" src="Asset/NamCheongLogo_propeller.png">
+            </div>
+        </div>
+
+        <script>
+            // create a function to update the date and time
+            function updateDateTime() {
+                // create a new `Date` object
+                const now = new Date();
+
+                // get the current date and time as a string
+                const currentDate = now.toLocaleString("en-US", { dateStyle: "long" });
+                const currentTime = now.toLocaleString("en-US", { timeStyle: "medium" });
+
+                // update the `textContent` property of the `span` element with the `id` of `datetime`
+                document.querySelector('#date').textContent = currentDate;
+                document.querySelector('#time').textContent = currentTime;
+            }
+
+            // call the `updateDateTime` function every second
+            setInterval(updateDateTime, 1000);
+
+        // navigate to administrator page
+        function NavigateToAdmin() {
+            window.location.href = "/AdministratorPage/@admin/Dashboard";
+        }
+
+        // navigate to employee page
+        function NavigateToEmployee() {
+            window.location.href = "/Employee/@emp/Home";
+        }
+        </script>
+
+    </body>
+</html>
+
+@code{
+    [Parameter] public int emp { get; set; }
+    [Parameter] public int admin { get; set; }
+    public string? Username { get; set; } 
+    public Employee employees { get; set; } = new Employee();
+
+    private bool UserAuthenticated => Authenticationstate.User.Identity?.IsAuthenticated ?? false;
+    private string UserName => Authenticationstate.User.Identity?.Name ?? "Unknown";
+    private AuthenticationState Authenticationstate { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Authenticationstate = await IdentityValidationProvider.GetAuthenticationStateAsync();
+        var user = Authenticationstate.User;
+        Username = UserName;
+
+        var existingEmployee = await Http.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{(string)Username}");
+        if (existingEmployee != null && existingEmployee.Employee__Name == UserName)
+        {
+            employees = existingEmployee;
+
+            //Update log
+            existingEmployee.Employee__Log = DateTime.Now;
+            var result = await Http.PutAsJsonAsync($"https://localhost:7219/api/Employees/UpdateEmployeeByID/{existingEmployee.Employee__ID}", existingEmployee);
+
+            Console.WriteLine("Existing Employee in Employee Home - " + @UserName);
+            emp = employees.Employee__ID;
+            admin = employees.Employee__ID;
+        }
+        else
+        {
+            // Post the employees details to the Employee controller to create new employee data
+            await AddEmployee();
+            Console.WriteLine("Added New Employee" + @Username);         
+            emp = employees.Employee__ID;
+        }
+    }
+
+    async Task AddEmployee()
+    {
+        //Create a new employee record
+        var newEmployee2 = new Employee()
+            {
+                Employee__Name = UserName,
+                Employee__Log = DateTime.Now
+            };
+
+        try
+        {
+            // Post the employees data to the server using PostAsJsonAsync
+            var result = await Http.PostAsJsonAsync("https://localhost:7219/api/Employees/AddEmployee", newEmployee2);
+
+
+            // Ensure the request was successful
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Added New Employee");
+            };
+
+        }
+        catch (HttpRequestException ex)
+        {
+            // Handle any exceptions or errors that occur during the request BY logging the exception or show an error message to the user
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+}

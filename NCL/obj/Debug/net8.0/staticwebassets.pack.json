@@ -1,0 +1,285 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\NCL.bundle.scp.css",
+      "PackagePath": "staticwebassets\\NCL.bundle.scp.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\EventPage\\Doc-Logo.png",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\EventPage\\Doc-Logo.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\EventPage\\Frame1.png",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\EventPage\\Frame1.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\EventPage\\event-gif.gif",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\EventPage\\event-gif.gif"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\HomePage\\emp-home-footer.png",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\HomePage\\emp-home-footer.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\HomePage\\emp-home-gif.gif",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\HomePage\\emp-home-gif.gif"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\HomePage\\joyous-side.jpg",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\HomePage\\joyous-side.jpg"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\Img-NC-Logo-White.jpg",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\Img-NC-Logo-White.jpg"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\MomentPage\\joyous-gif.gif",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\MomentPage\\joyous-gif.gif"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\MomentPage\\my-moment-gif.gif",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\MomentPage\\my-moment-gif.gif"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\PagePage\\page-gif.gif",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\PagePage\\page-gif.gif"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\white-logo.png",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\white-logo.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\EmployeeAsset\\white-polygon.png",
+      "PackagePath": "staticwebassets\\Asset\\EmployeeAsset\\white-polygon.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\NCLimg (1).png",
+      "PackagePath": "staticwebassets\\Asset\\NCLimg (1).png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\NCLimg (6).png",
+      "PackagePath": "staticwebassets\\Asset\\NCLimg (6).png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\NamCheongLogo.png",
+      "PackagePath": "staticwebassets\\Asset\\NamCheongLogo.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\NamCheongLogo_propeller.png",
+      "PackagePath": "staticwebassets\\Asset\\NamCheongLogo_propeller.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\NamCheongLogo_vertical.png",
+      "PackagePath": "staticwebassets\\Asset\\NamCheongLogo_vertical.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\VisitorAsset\\HomePage\\psv-line.png",
+      "PackagePath": "staticwebassets\\Asset\\VisitorAsset\\HomePage\\psv-line.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\VisitorAsset\\HomePage\\ssv-line.png",
+      "PackagePath": "staticwebassets\\Asset\\VisitorAsset\\HomePage\\ssv-line.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Asset\\ocean background video.mp4",
+      "PackagePath": "staticwebassets\\Asset\\ocean background video.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Moment\\Moment_Admin_1\\InfoHubDatabase.png",
+      "PackagePath": "staticwebassets\\Moment\\Moment_Admin_1\\InfoHubDatabase.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Moment\\Moment_Emp_1\\InfoHubDatabase.png",
+      "PackagePath": "staticwebassets\\Moment\\Moment_Emp_1\\InfoHubDatabase.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Moment\\Moment_Emp_1\\example.jpg",
+      "PackagePath": "staticwebassets\\Moment\\Moment_Emp_1\\example.jpg"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Company Profile\\Event_Company Profile\\NCL Organization Chart.pdf",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Company Profile\\Event_Company Profile\\NCL Organization Chart.pdf"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Company Profile\\Event_Company Profile\\OrientationVideo-Mission.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Company Profile\\Event_Company Profile\\OrientationVideo-Mission.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Company Profile\\Event_Company Profile\\OrientationVideo-Vision.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Company Profile\\Event_Company Profile\\OrientationVideo-Vision.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\ABAC.pdf",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\ABAC.pdf"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\COC.pdf",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\COC.pdf"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\IT Policy.pdf",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\IT Policy.pdf"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\OrientationVideo-ABAC.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\OrientationVideo-ABAC.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\OrientationVideo-COC.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\OrientationVideo-COC.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\OrientationVideo-Whistle Blowing System.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employee Management\\Event_Employee Management\\OrientationVideo-Whistle Blowing System.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Absence.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Absence.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Holiday.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Holiday.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Job Level.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Job Level.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-OT.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-OT.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Offshore Allowance.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Offshore Allowance.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Probation.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Probation.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Work Duration.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Work Duration.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Work On Off Day.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Employment Terms & Conditions\\Event_Employment Terms & Conditions\\OrientationVideo-Work On Off Day.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Performance Management\\Event_Performance Management\\OrientationVideo-Performance Management Framework.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Performance Management\\Event_Performance Management\\OrientationVideo-Performance Management Framework.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Employee\\Class_Performance Management\\Event_Performance Management\\OrientationVideo-Performance Management.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Employee\\Class_Performance Management\\Event_Performance Management\\OrientationVideo-Performance Management.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Media Gallery 2\\Class_2023\\Event_Another Event\\InfoHubDatabase.png",
+      "PackagePath": "staticwebassets\\Page\\Page_Media Gallery 2\\Class_2023\\Event_Another Event\\InfoHubDatabase.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Media Gallery 2\\Class_2023\\Event_Another Event\\UserFlow.png",
+      "PackagePath": "staticwebassets\\Page\\Page_Media Gallery 2\\Class_2023\\Event_Another Event\\UserFlow.png"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\Canyon Paintball 1.jpg",
+      "PackagePath": "staticwebassets\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\Canyon Paintball 1.jpg"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\Canyon Paintball 2.jpg",
+      "PackagePath": "staticwebassets\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\Canyon Paintball 2.jpg"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\Canyon Paintball Video.mp4",
+      "PackagePath": "staticwebassets\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\Canyon Paintball Video.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\SKOSV Vessel List (rev16) fira[1].pdf",
+      "PackagePath": "staticwebassets\\Page\\Page_Media Gallery 2\\Class_2024\\Event_Canyon Paintball\\SKOSV Vessel List (rev16) fira[1].pdf"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Video\\24216-340670744_medium.mp4",
+      "PackagePath": "staticwebassets\\Video\\24216-340670744_medium.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\Video\\HSSE.mp4",
+      "PackagePath": "staticwebassets\\Video\\HSSE.mp4"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\FilterDropDown.css",
+      "PackagePath": "staticwebassets\\css\\FilterDropDown.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\StyleSheet.css",
+      "PackagePath": "staticwebassets\\css\\StyleSheet.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\ViewStyle.css",
+      "PackagePath": "staticwebassets\\css\\ViewStyle.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\app.css",
+      "PackagePath": "staticwebassets\\css\\app.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\employee.css",
+      "PackagePath": "staticwebassets\\css\\employee.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\employeeLayout.css",
+      "PackagePath": "staticwebassets\\css\\employeeLayout.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\imageSlideshow.css",
+      "PackagePath": "staticwebassets\\css\\imageSlideshow.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\style-admin.css",
+      "PackagePath": "staticwebassets\\css\\style-admin.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\style-moment.css",
+      "PackagePath": "staticwebassets\\css\\style-moment.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\css\\style.css",
+      "PackagePath": "staticwebassets\\css\\style.css"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\js\\Admin.js",
+      "PackagePath": "staticwebassets\\js\\Admin.js"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\js\\animation.js",
+      "PackagePath": "staticwebassets\\js\\animation.js"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\js\\filePaste.js",
+      "PackagePath": "staticwebassets\\js\\filePaste.js"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\js\\filterDropDown.js",
+      "PackagePath": "staticwebassets\\js\\filterDropDown.js"
+    },
+    {
+      "Id": "C:\\Users\\User 2\\source\\repos\\NCL\\NCL\\NCL\\NCL\\wwwroot\\js\\parallax-a.js",
+      "PackagePath": "staticwebassets\\js\\parallax-a.js"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.NCL.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.NCL.props",
+      "PackagePath": "build\\NCL.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.NCL.props",
+      "PackagePath": "buildMultiTargeting\\NCL.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.NCL.props",
+      "PackagePath": "buildTransitive\\NCL.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

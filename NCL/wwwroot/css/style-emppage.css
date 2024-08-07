@@ -1,0 +1,487 @@
+﻿* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    padding: 0;
+    font-family: "Poppins", sans-serif;
+    background-color: var(--secondary-color);
+}
+
+/* Center website */
+.box {
+    display: inline-block;
+    width: 50%;
+    height: auto;
+    margin: 3% 0% 0% 10%;
+    overflow: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .box::-webkit-scrollbar {
+        display: none;
+    }
+
+.box2 {
+    display: inline-block;
+    width: 30%;
+    float: inline-end;
+    height: auto;
+    left: 10px;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 70%;
+    margin: 1% 10% 0% 0%;
+    overflow: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .box2::-webkit-scrollbar {
+        display: none;
+    }
+
+.text_box {
+    position: absolute;
+    margin: 3% 3% 3% 3%;
+    width: 70%;
+    height:90%;
+    overflow:scroll;
+    -ms-overflow-style:scrollbar; /* IE and Edge */
+    scrollbar-width:thin; /* Firefox */
+}
+
+    .text_box ul {
+        margin: 10px 10px 10px 10px;
+        padding: 0px;
+    }
+
+    .text_box .text {
+        position: relative;
+        padding: 5px 5px 5px 5px;
+        width: auto;
+        bottom: 50%;
+        left: 5px;
+    }
+
+.mySlides {
+    display: none;
+}
+
+.myTexts {
+    display: none;
+}
+
+
+.row {
+    margin: 10px -16px;
+}
+
+    /* Add padding BETWEEN each column */
+    .row,
+    .row > .column,
+    .row > .flip-card {
+        padding: 8px;
+    }
+
+
+/* Create 2 equal columns that floats next to each other */
+.column {
+    position: relative;
+    float: left;
+    width: 368px;
+    margin: auto;
+    padding: 10px;
+    display: block;
+}
+
+    .column:hover,
+    .column:focus {
+        cursor: pointer;
+    }
+
+.column2 {
+    position: absolute;
+    float: left;
+    width: 45%;
+    display: none;
+}
+
+    .column2:hover,
+    .column2:focus {
+        cursor: pointer;
+
+    }
+
+.flip-card {
+    position: relative;
+    float: left;
+    width: 332px;
+    height: 237px;
+    margin: 10px 10px 10px 10px;
+    display: block;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+}
+
+.flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back, .flip-card-back2 {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    position: absolute;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.flip-card-front {
+    background-color: white;
+}
+
+    .flip-card-front img {
+        margin: auto;
+        background-color: white;
+    }
+
+.flip-card-back {
+    background-color: white;
+    transform: rotateY(180deg);
+}
+
+    .flip-card-back img {
+        margin: auto;
+        background-color: white;
+    }
+
+.flip-card-back2 {
+    display:none;
+    background-color: white;
+    transform: rotateY(180deg);
+}
+
+    .flip-card-back2 img {
+        margin: auto;
+        background-color: white;
+    }
+
+/* Content */
+.content {
+    background-color: white;
+    padding: 10px;
+}
+
+/* Style the buttons */
+.btn-base {
+    border: none;
+    outline: none;
+    padding: 12px 16px;
+    background-color: white;
+    cursor: pointer;
+}
+
+    .btn-base:hover {
+        background-color: #ddd;
+    }
+
+    .btn-base.active {
+        background-color: #666;
+        color: white;
+    }
+
+/* Style the delete buttons */
+    .btn.delete, .classDisplay {
+        border: 1px solid #666666;
+        outline: none;
+        border-radius: 5px;
+        margin: 4px 2px;
+        padding: 6px 12px;
+        background-color: white;
+        color: #666666;
+        cursor: pointer;
+    }
+
+        .btn.delete:hover {
+            background-color: #DC3545;
+            color: #fff;
+        }
+
+        .btn.delete.active {
+            background-color: #DC3545;
+            color: #fff;
+        }
+
+.MyColumn {
+    float: left;
+    width: 25%;
+    overflow: auto;
+}
+
+    .MyColumn p, .MyColumn h2 {
+        color: white;
+    }
+/* The Modal (background) */
+.modal {
+    /*    display: none;
+    position: fixed;
+    z-index: 1;
+    padding-top: 1%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: black;
+    justify-content: center;*/
+
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    padding-top: 20px; /* Location of the box */
+    padding-bottom: 20px;
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    /*    position: relative;
+    background-color: #fefefe;
+    margin: 0 auto;
+    padding: 2% 2% 2% 10%;
+    width: 80%;
+    min-width: 50%;
+    max-width: 900px;
+    display: inline-block;*/
+
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+.modal-content2 {
+    display: inline-block;
+    width: 20%;
+    float: inline-end;
+    height: auto;
+    right: 2%;
+    top: 50%;
+    position: -webkit-sticky;
+    position: sticky;
+    margin: 2% 2% 2% 2%;
+    overflow: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+    background-color: none;
+    color: whitesmoke;
+}
+
+/* Add Animation */
+.modal-content {
+    -webkit-animation-name: zoom;
+    -webkit-animation-duration: 0.6s;
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+.img-tabcontent {
+    margin: auto;
+    width: 850px;
+    height: 480px;
+}
+
+    .img-tabcontent img {
+        width: 850px;
+        height: 480px;
+    }
+
+
+    @-webkit-keyframes zoom {
+        from {
+        -webkit-transform: scale(0)
+    }
+
+    to {
+        -webkit-transform: scale(1)
+    }
+}
+
+@keyframes zoom {
+    from {
+        transform: scale(0)
+    }
+
+    to {
+        transform: scale(1)
+    }
+}
+
+/* The Close Button */
+.close {
+    /*    color: white;
+    position: relative;
+    top: 10px;
+    right: 25px;
+    font-size: 35px;
+    font-weight: bold;*/
+
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    margin-left: 95%;
+}
+
+    .close:hover,
+    .close:focus {
+        color: #999;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+
+img {
+    margin-bottom: -4px;
+}
+
+.caption-container {
+    text-align: center;
+    background-color: black;
+    padding: 2px 16px;
+    color: white;
+}
+
+.demo {
+    opacity: 0.6;
+    display: inline-block;
+}
+
+    .active,
+    .demo:hover {
+        opacity: 1;
+    }
+
+img.hover-shadow {
+    transition: 0.5s;
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+@media screen and (max-width: 600px) {
+
+    .box {
+        width: 100%;
+        height: auto;
+        margin: 0% 0% 0% 0%;
+        overflow: auto;
+    }
+
+    .box2 {
+        width: 100%;
+        height: auto;
+        margin: 0% 0% 0% 0%;
+        overflow: auto;
+    }
+
+    .text_box {
+        position: absolute;
+        margin: 10px 0px 10px 0px;
+        width: 70%;
+        height: 90%;
+        overflow: scroll;
+    }
+        .text_box ul {
+            margin: 10px 10px 10px 10px;
+            padding: 0px;
+        }
+
+        .text_box .text {
+            position: relative;
+            padding: 5px 5px 5px 5px;
+            width: auto;
+            bottom: 50%;
+            left: 5px;
+        }
+
+    .flip-card-back2 {
+        display: block;
+        background-color: white;
+        transform: rotateY(180deg);
+    }
+
+    .main {
+        max-width: 100%;
+        height: auto;
+        margin: 0% 10% 0% 10%;
+    }
+
+    .row {
+        margin: auto;
+    }
+
+        /* Add padding BETWEEN each column */
+        .row,
+        .row > .column {
+            padding: 8px;
+        }
+
+    .column {
+        margin: 10px 10px 10px 10px;
+        float: left;
+        display: block;
+    }
+
+
+    .column2 {
+        position: relative;
+        float: left;
+        height: 100px;
+        margin: auto;
+        width: 368px;
+        display: block;
+    }
+
+        .column2:hover,
+        .column2:focus {
+            cursor: pointer;
+        }
+
+    .MyColumn {
+        float: left;
+        width: 80%;
+    }
+
+    .img-tabcontent {
+        margin: auto;
+        width: 250px;
+        height: 180px;
+    }
+
+        .img-tabcontent img {
+            width: 250px;
+            height: 180px;
+        }
+}

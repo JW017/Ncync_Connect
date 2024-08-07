@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Microsoft\**" />
+    <Content Remove="Microsoft\**" />
+    <EmbeddedResource Remove="Microsoft\**" />
+    <None Remove="Microsoft\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\css\style-a.css" />
+    <Content Remove="wwwroot\css\style-emppage.css" />
+    <Content Remove="wwwroot\css\style-home.css" />
+    <Content Remove="wwwroot\css\style-light.css" />
+    <Content Remove="wwwroot\css\style-reveal.css" />
+    <Content Remove="wwwroot\style.css" />
+    <Content Remove="wwwroot\ViewStyle.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\css\style-reveal.css" />
+    <None Include="wwwroot\css\style-light.css" />
+    <None Include="wwwroot\css\style-a.css" />
+    <None Include="wwwroot\css\style-emppage.css" />
+    <None Include="wwwroot\css\style-home.css" />
+    <None Include="wwwroot\css\style.css" />
+    <None Include="wwwroot\css\ViewStyle.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\NCL.Shared\NCL.Shared.csproj" />
+    <ProjectReference Include="..\NCL.Client\NCL.Client.csproj" />
+    <PackageReference Include="Blazor.Bootstrap" Version="3.0.0-preview.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="8.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.6" />
+    <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Identity.Web" Version="2.17.4" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="2.17.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+    <Folder Include="wwwroot\Moment\" />
+    <Folder Include="wwwroot\Page\Page_Employee\Class_Employee Orientation\" />
+    <Folder Include="wwwroot\Page\Page_Media Gallery 2\Class_2024\" />
+    <Folder Include="wwwroot\Video\" />
+  </ItemGroup>
+
+</Project>
